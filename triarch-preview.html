@@ -1,0 +1,1369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f7">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>triArch</title>
+  <meta name="description" content="Architecture studio website with a client portal for following project progress and giving feedback.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap">
+  <style>
+/* iOS-style design system: system colours, frosted glass, grouped lists, large titles, spring-like motion. Light and dark. */
+:root {
+  --bg: #f2f2f7;
+  --card: #ffffff;
+  --fill: rgba(118, 118, 128, 0.12);
+  --frame: #ebe8e0;
+  --ink: #000000;
+  --mute: #5f5f64;
+  --line: #d1d1d6;
+  --accent: #0071e3;
+  --accent-press: #0062c4;
+  --link: #0066cc;
+  --tint: rgba(0, 113, 227, 0.12);
+  --green: #248a3d;
+  --green-tint: rgba(36, 138, 61, 0.14);
+  --orange: #c93400;
+  --orange-tint: rgba(255, 149, 0, 0.18);
+  --red: #d70015;
+  --glass: rgba(242, 242, 247, 0.72);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 28px rgba(0, 0, 0, 0.07);
+  --t-blue: #e6f0ff;
+  --t-green: #e4f5e8;
+  --t-orange: #fff0dc;
+  --recv: #e9e9eb;
+  --r-lg: 24px;
+  --r-md: 16px;
+  --r-sm: 12px;
+  --spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --gutter: clamp(18px, 4vw, 56px);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --step--1: 0.8125rem;
+  --step-0: 1.0625rem;
+  --step-1: clamp(1.2rem, 1.1rem + 0.4vw, 1.4rem);
+  --step-2: clamp(1.7rem, 1.35rem + 1.4vw, 2.5rem);
+  --step-3: clamp(2.5rem, 1.7rem + 3.6vw, 4.6rem);
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --card: #1c1c1e;
+    --fill: rgba(118, 118, 128, 0.24);
+    --frame: #2c2c2e;
+    --ink: #ffffff;
+    --mute: #a1a1a6;
+    --line: #38383a;
+    --accent: #0a6fdb;
+    --accent-press: #0a5fbb;
+    --link: #2997ff;
+    --tint: rgba(41, 151, 255, 0.18);
+    --green: #30d158;
+    --green-tint: rgba(48, 209, 88, 0.18);
+    --orange: #ff9f0a;
+    --orange-tint: rgba(255, 159, 10, 0.2);
+    --red: #ff453a;
+    --glass: rgba(28, 28, 30, 0.72);
+    --shadow: none;
+    --t-blue: #0d2a4d;
+    --t-green: #0f2f1a;
+    --t-orange: #3a2606;
+    --recv: #2c2c2e;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 var(--step-0)/1.47 var(--font);
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+main { flex: 1; outline: none; }
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+a.link, .link { color: var(--link); }
+a.link:hover { text-decoration: underline; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3, p, dl, dd { margin: 0; }
+h1, h2, h3 { font-weight: 700; letter-spacing: -0.028em; line-height: 1.08; text-wrap: balance; }
+h1 { font-size: var(--step-3); letter-spacing: -0.035em; line-height: 1.02; }
+h2 { font-size: var(--step-2); }
+h3 { font-size: var(--step-1); font-weight: 600; letter-spacing: -0.02em; }
+p { max-width: 62ch; text-wrap: pretty; }
+.lead { font-size: clamp(1.15rem, 1.05rem + 0.5vw, 1.45rem); line-height: 1.35; color: var(--mute); max-width: 36ch; letter-spacing: -0.018em; }
+.muted { color: var(--mute); }
+.small { font-size: var(--step--1); }
+.idx { font-size: var(--step--1); font-weight: 600; color: var(--mute); margin-bottom: 10px; }
+.wrap { padding-inline: var(--gutter); max-width: 1320px; margin-inline: auto; width: 100%; }
+.skip { position: absolute; left: -999px; top: 8px; background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 999px; z-index: 50; }
+.skip:focus { left: 8px; }
+
+/* frosted glass navigation bar */
+.site-head { position: sticky; top: 0; z-index: 40; background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(22px); backdrop-filter: saturate(180%) blur(22px); border-bottom: 0.5px solid var(--line); padding-top: env(safe-area-inset-top); }
+.site-head .wrap, .site-head .pill { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; padding-inline: var(--gutter); max-width: 1320px; margin-inline: auto; width: 100%; }
+.brand { font-weight: 650; font-size: 1.05rem; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.brand-slogan { font-size: 0.6875rem; font-weight: 400; letter-spacing: 0; color: var(--mute); margin-top: 1px; white-space: nowrap; }
+.brand-mark { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(180deg, #4aa8ff, #0071e3); position: relative; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12); }
+.brand-mark::before { content: ""; position: absolute; inset: 6px 6px 6px 6px; background: #fff; clip-path: polygon(50% 0, 100% 44%, 100% 100%, 0 100%, 0 44%); }
+.brand-mark::after { content: ""; position: absolute; left: 13px; bottom: 6px; width: 4px; height: 7px; background: #0b73e6; border-radius: 2px 2px 0 0; }
+.nav { display: flex; align-items: center; gap: clamp(14px, 2.4vw, 30px); }
+.nav a, .nav button.linklike { font-size: var(--step--1); font-weight: 500; color: var(--mute); padding: 6px 0; transition: color 0.2s; }
+.nav a:hover, .nav a[aria-current="page"], .nav button.linklike:hover { color: var(--ink); }
+.menu-btn { display: none; }
+button { font: inherit; color: inherit; cursor: pointer; letter-spacing: inherit; }
+.linklike { background: none; border: 0; padding: 0; }
+
+@media (max-width: 760px) {
+  .menu-btn { display: inline-flex; align-items: center; border: 0; background: var(--fill); padding: 7px 16px; font-size: var(--step--1); font-weight: 600; border-radius: 999px; }
+  .nav { position: absolute; left: 12px; right: 12px; top: calc(100% + 8px); background: var(--card); border-radius: var(--r-md); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18); flex-direction: column; align-items: stretch; gap: 0; padding: 4px 18px; display: none; }
+  .nav.open { display: flex; }
+  .nav a, .nav button.linklike { padding: 14px 0; border-bottom: 0.5px solid var(--line); font-size: 1.0625rem; color: var(--ink); text-align: left; }
+  .nav > :last-child { border-bottom: 0; }
+}
+
+/* buttons and fields */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 0 28px; border: 0; background: var(--accent); color: #fff; font-weight: 600; font-size: 1.0625rem; border-radius: 14px; transition: transform 0.35s var(--spring), background 0.2s; }
+.btn:hover { background: var(--accent-press); }
+.btn:active { transform: scale(0.97); }
+.btn.ghost { background: var(--tint); color: var(--link); }
+.btn.ghost:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.btn.sm { min-height: 36px; padding: 0 16px; font-size: 0.9375rem; border-radius: 999px; }
+.btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+.field { display: grid; gap: 6px; margin-bottom: 18px; }
+.field label { font-size: var(--step--1); font-weight: 600; color: var(--mute); padding-left: 4px; }
+input, select, textarea { font: inherit; letter-spacing: inherit; color: inherit; background: var(--card); border: 0.5px solid var(--line); padding: 13px 16px; border-radius: var(--r-sm); width: 100%; transition: box-shadow 0.2s; }
+textarea { min-height: 110px; resize: vertical; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 0; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent); border-color: var(--accent); }
+.hint { color: var(--mute); font-size: var(--step--1); }
+.error { font-size: var(--step--1); font-weight: 600; background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); padding: 12px 14px; border-radius: var(--r-sm); margin-bottom: 16px; }
+
+/* hero */
+.hero { padding-top: clamp(32px, 7vw, 88px); }
+.hero h1 { max-width: 14ch; }
+.hero .lead { margin-top: 22px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.hero-stats { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: clamp(20px, 5vw, 64px); margin-top: clamp(32px, 5vw, 56px); }
+.hero-stats dt { font-size: clamp(1.8rem, 1.4rem + 1.6vw, 2.8rem); font-weight: 700; letter-spacing: -0.035em; line-height: 1; order: 1; }
+.hero-stats dd { color: var(--mute); font-size: var(--step--1); margin-top: 6px; order: 2; }
+.hero-stats div { display: flex; flex-direction: column; }
+.hero-drawing { margin-top: clamp(28px, 4vw, 56px); background: var(--frame); border-radius: 32px; padding: clamp(12px, 3vw, 40px); position: relative; overflow: hidden; }
+.hero-drawing svg { width: 100%; height: auto; max-height: 64vh; color: var(--ink); }
+.hero-drawing .tr { stroke-dasharray: 1; stroke-dashoffset: 1; animation: trace 2.6s cubic-bezier(.5, 0, .2, 1) forwards; }
+.hero-drawing .fl { opacity: 0; animation: fadein 1.2s ease 1.9s forwards; }
+@keyframes trace { to { stroke-dashoffset: 0; } }
+@keyframes fadein { to { opacity: 1; } }
+.hero-caption { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 8px 0; font-size: var(--step--1); color: var(--mute); }
+@media (max-width: 480px) { .hero-stats { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+@media (prefers-reduced-motion: reduce) {
+  .hero-drawing .tr { animation: none; stroke-dashoffset: 0; }
+  .hero-drawing .fl { animation: none; opacity: 1; }
+  * { scroll-behavior: auto !important; transition: none !important; }
+  #app.enter { animation: none !important; }
+}
+#app.enter { animation: enter 0.35s var(--spring); }
+@keyframes enter { from { opacity: 0; } to { opacity: 1; } }
+
+.section { padding-block: clamp(56px, 9vw, 128px) 0; }
+.section-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: clamp(20px, 3vw, 36px); flex-wrap: wrap; }
+.section-intro { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(20px, 5vw, 80px); align-items: end; margin-bottom: clamp(24px, 4vw, 44px); }
+.section-intro p { color: var(--mute); }
+.section-intro .btn { margin-top: 20px; }
+@media (max-width: 760px) { .section-intro { grid-template-columns: 1fr; } }
+
+/* cards: projects, news */
+.works { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(16px, 2.4vw, 28px); }
+.work { display: block; background: var(--card); border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow); transition: transform 0.5s var(--spring); }
+.work:hover { transform: translateY(-4px); }
+.work:active { transform: scale(0.985); }
+.work-img { background: var(--frame); aspect-ratio: 5 / 3.2; overflow: hidden; }
+.work-img svg { width: 100%; height: 100%; }
+.work-img .dwg { padding: 5%; }
+.work-cap { display: flex; justify-content: space-between; gap: 12px; padding: 18px 22px 20px; align-items: baseline; flex-wrap: wrap; }
+.work-cap strong { font-weight: 650; font-size: var(--step-1); letter-spacing: -0.02em; }
+.work-cap .link { font-size: var(--step--1); font-weight: 500; }
+@media (max-width: 640px) { .works { grid-template-columns: 1fr; } }
+
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px, 2.4vw, 28px); }
+.shot { margin: 0; }
+.shot .frame, .shot .big { background: var(--frame); border-radius: var(--r-lg); aspect-ratio: 4 / 3; overflow: hidden; }
+.shot svg { width: 100%; height: 100%; }
+.shot .dwg { padding: 6%; }
+.shot figcaption { padding: 10px 6px 0; font-size: var(--step--1); color: var(--mute); }
+@media (max-width: 640px) { .duo { grid-template-columns: 1fr; } }
+
+/* bento widgets, like the iOS home screen */
+.bento { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(12px, 2vw, 20px); }
+.widget { background: var(--card); border-radius: var(--r-lg); padding: 22px 22px 24px; min-height: 190px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow); }
+.widget strong { font-size: clamp(2.4rem, 1.8rem + 2.4vw, 3.8rem); font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.widget span { color: var(--mute); font-size: 0.9375rem; line-height: 1.3; }
+.widget.t-blue { background: var(--t-blue); }
+.widget.t-green { background: var(--t-green); }
+.widget.t-orange { background: var(--t-orange); }
+.widget.photo { grid-column: span 2; padding: 0; min-height: 0; overflow: hidden; background: var(--frame); }
+.widget.photo svg { width: 100%; height: 100%; }
+@media (max-width: 900px) { .bento { grid-template-columns: repeat(2, 1fr); } .widget { min-height: 160px; } }
+
+/* grouped lists (inset grouped, like Settings) */
+.group { background: var(--card); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow); }
+.cols { display: grid; grid-template-columns: 1fr 1.4fr; gap: clamp(24px, 6vw, 96px); }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+.rows { background: var(--card); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow); }
+.rows > div { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr; gap: 16px; padding: 16px 20px; position: relative; }
+.rows > div + div::before { content: ""; position: absolute; left: 20px; right: 0; top: 0; border-top: 0.5px solid var(--line); }
+@media (max-width: 560px) { .rows > div { grid-template-columns: 1fr; gap: 4px; } }
+.rows dt, .rows .k { font-weight: 600; }
+
+/* FAQ accordion */
+.faq { background: var(--card); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow); max-width: 860px; }
+.faq details + details { border-top: 0.5px solid var(--line); margin-left: 20px; }
+.faq summary { list-style: none; cursor: pointer; padding: 18px 20px 18px 0; display: flex; justify-content: space-between; gap: 16px; font-weight: 600; margin-left: 0; }
+.faq details > summary { padding-left: 20px; }
+.faq details + details > summary { padding-left: 0; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: ""; flex: none; width: 9px; height: 9px; margin-top: 8px; border-right: 2px solid var(--mute); border-bottom: 2px solid var(--mute); transform: rotate(45deg); transition: transform 0.35s var(--spring); }
+.faq details[open] summary::after { transform: rotate(-135deg); margin-top: 12px; }
+.faq details p { padding: 0 24px 20px 20px; color: var(--mute); }
+.faq details + details p { padding-left: 0; }
+
+.cta-pair { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px, 2.4vw, 28px); }
+.cta-card { background: var(--card); border-radius: var(--r-lg); padding: clamp(24px, 4vw, 44px); min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; gap: 32px; box-shadow: var(--shadow); }
+.cta-card.tint { background: var(--accent); color: #fff; }
+.cta-card.tint .muted { color: rgba(255, 255, 255, 0.8); }
+.cta-card.tint .btn { background: #fff; color: #0062c4; }
+@media (max-width: 760px) { .cta-pair { grid-template-columns: 1fr; } .cta-card { min-height: 0; } }
+
+/* project page */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); background: var(--card); border-radius: var(--r-md); margin-block: 28px; padding: 6px 4px; box-shadow: var(--shadow); }
+.facts div { padding: 12px 16px; }
+.facts dt { font-size: var(--step--1); color: var(--mute); }
+.facts dd { font-weight: 600; }
+.big-img { background: var(--frame); aspect-ratio: 5 / 3; border-radius: var(--r-lg); }
+.big-img svg { width: 100%; height: 100%; }
+.big-img .dwg { padding: 4%; }
+
+/* footer */
+.site-foot { margin-top: clamp(72px, 10vw, 140px); border-top: 0.5px solid var(--line); padding-block: 32px 40px; font-size: var(--step--1); color: var(--mute); }
+.site-foot .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; }
+.site-foot strong { color: var(--ink); }
+.site-foot a { color: var(--link); }
+.site-foot p { max-width: 36ch; }
+
+/* login */
+.auth { max-width: 440px; padding-block: clamp(32px, 8vw, 96px); }
+.demo-list { display: grid; gap: 0; margin-top: 12px; background: var(--card); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow); }
+.demo { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 0; padding: 15px 18px; text-align: left; background: none; width: 100%; position: relative; transition: background 0.2s; }
+.demo + .demo::before { content: ""; position: absolute; left: 18px; right: 0; top: 0; border-top: 0.5px solid var(--line); }
+.demo:hover, .demo:active { background: var(--fill); }
+.demo span:first-child { font-weight: 600; }
+
+/* portal */
+.portal-head { padding-top: clamp(20px, 4vw, 44px); }
+.crumb { font-size: var(--step--1); margin-bottom: 6px; }
+.crumb a { color: var(--link); font-weight: 500; }
+.title-block { display: grid; grid-template-columns: 2.2fr 1.4fr 1fr 1fr; margin-top: 14px; background: var(--card); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow); }
+.title-block > div { padding: 14px 18px 16px; min-width: 0; box-shadow: 0 0 0 0.25px var(--line); }
+.title-block .k { font-size: var(--step--1); color: var(--mute); display: block; }
+.title-block .v { font-weight: 600; overflow-wrap: anywhere; font-size: inherit; letter-spacing: inherit; line-height: inherit; }
+.title-block .name .v { font-size: var(--step-1); font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; }
+@media (max-width: 860px) {
+  .title-block { grid-template-columns: 1fr 1fr; }
+  .title-block .name { grid-column: span 2; }
+  .hide-sm { display: none; }
+}
+
+/* segmented control on desktop, icon tab bar on phones */
+.tabs { display: inline-flex; gap: 2px; background: var(--fill); padding: 3px; border-radius: 11px; margin-top: 24px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.tabs a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 18px; border-radius: 9px; font-size: 0.9375rem; font-weight: 500; white-space: nowrap; transition: background 0.3s var(--spring), box-shadow 0.3s; }
+.tabs a:hover { background: rgba(120, 120, 128, 0.08); }
+.tabs a[aria-current="page"] { background: var(--card); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14), 0 0 0 0.5px rgba(0, 0, 0, 0.04); font-weight: 600; }
+.count { min-width: 20px; height: 20px; padding: 0 6px; background: var(--red); color: #fff; font-size: 0.75rem; font-weight: 600; display: inline-grid; place-items: center; border-radius: 10px; line-height: 1; }
+.tabbar { display: none; }
+@media (max-width: 760px) {
+  .tabs { display: none; }
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(22px); backdrop-filter: saturate(180%) blur(22px); border-top: 0.5px solid var(--line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+  .tabbar a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; font-size: 0.6875rem; font-weight: 500; color: var(--mute); position: relative; }
+  .tabbar a[aria-current="page"] { color: var(--link); font-weight: 600; }
+  .tabbar svg { width: 26px; height: 26px; }
+  .tabbar .count { position: absolute; top: 0; left: calc(50% + 6px); min-width: 18px; height: 18px; }
+  body.has-tabbar { padding-bottom: calc(66px + env(safe-area-inset-bottom)); }
+  body.has-tabbar .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
+}
+
+.panel { padding-block: clamp(24px, 4vw, 44px) 0; }
+.progress { display: grid; grid-template-columns: repeat(5, 1fr); margin: 10px 0 12px; list-style: none; padding: 0; }
+.phase { position: relative; padding-top: 26px; font-size: var(--step--1); padding-right: 8px; }
+.phase::before { content: ""; position: absolute; left: 0; right: 0; top: 8px; height: 5px; background: var(--fill); border-radius: 3px; }
+.phase.done::before { background: var(--green); }
+.phase.current::before { background: linear-gradient(90deg, var(--accent) var(--f, 0%), var(--fill) var(--f, 0%)); }
+.phase::after { content: ""; position: absolute; left: 0; top: 0; width: 21px; height: 21px; border-radius: 50%; background: var(--card); border: 2px solid var(--line); }
+.phase.done::after { background: var(--green); border-color: var(--green); box-shadow: inset 0 0 0 5px var(--green); }
+.phase.current::after { border-color: var(--accent); border-width: 6px; }
+.phase b { display: block; font-weight: 600; font-size: 0.9375rem; }
+.phase.upcoming { color: var(--mute); }
+@media (max-width: 640px) {
+  .progress { grid-template-columns: 1fr; }
+  .phase { padding: 0 0 20px 36px; }
+  .phase::before { left: 9px; right: auto; top: 20px; bottom: 0; width: 5px; height: auto; }
+  .phase.current::before { background: linear-gradient(180deg, var(--accent) var(--f, 0%), var(--fill) var(--f, 0%)); }
+  .phase:last-child::before { display: none; }
+}
+.pct { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.pct strong { font-size: var(--step-2); font-weight: 700; letter-spacing: -0.035em; }
+
+.ms-list { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow); }
+.ms { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px 14px; padding: 16px 20px; position: relative; }
+.ms + .ms::before { content: ""; position: absolute; left: 64px; right: 0; top: 0; border-top: 0.5px solid var(--line); }
+.ms .dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); margin-top: 2px; display: grid; place-items: center; font-size: 0.8rem; font-weight: 700; color: #fff; }
+.ms.done .dot { background: var(--green); border-color: var(--green); }
+.ms.done .dot::after { content: ""; width: 6px; height: 11px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: translateY(-1px) rotate(45deg); }
+.ms.awaiting .dot { background: var(--orange); border-color: var(--orange); }
+.ms.awaiting .dot::after { content: "!"; }
+.ms.changes .dot { background: var(--orange-tint); border-color: var(--orange); color: var(--orange); }
+.ms.changes .dot::after { content: "\21BB"; }
+.ms h3 { font-size: 1.0625rem; letter-spacing: -0.015em; font-weight: 600; }
+.ms .meta { color: var(--mute); font-size: var(--step--1); }
+.ms .body { grid-column: 2 / -1; display: grid; gap: 12px; }
+.tag { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 4px 12px; border-radius: 999px; white-space: nowrap; height: fit-content; }
+.tag.solid { background: var(--green-tint); color: var(--green); }
+.tag.alert { background: var(--orange); color: #fff; }
+.tag.info { background: var(--tint); color: var(--link); }
+.tag.hatch { background: var(--orange-tint); color: var(--orange); }
+.tag.quiet { background: var(--fill); color: var(--mute); }
+.quote { background: var(--fill); padding: 10px 14px; border-radius: var(--r-sm); font-size: var(--step--1); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.reply { display: grid; gap: 10px; max-width: 520px; }
+@media (max-width: 560px) { .ms { grid-template-columns: 30px 1fr; padding: 16px; } .ms .tag { grid-column: 2; justify-self: start; } .ms .body { grid-column: 2; } .ms + .ms::before { left: 60px; } }
+
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 24px 18px; }
+.tile { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 0; }
+.tile .frame { background: var(--frame); aspect-ratio: 5 / 3; position: relative; border-radius: var(--r-lg); overflow: hidden; transition: transform 0.5s var(--spring); }
+.tile .frame svg { width: 100%; height: 100%; }
+.tile .frame .dwg { padding: 5%; }
+.tile:hover .frame { transform: scale(1.015); }
+.tile:active .frame { transform: scale(0.98); }
+.tile .cap { padding: 10px 6px 0; display: flex; justify-content: space-between; gap: 8px; }
+.pinbadge { position: absolute; right: 10px; top: 10px; }
+
+.viewer { display: grid; grid-template-columns: 1.7fr 1fr; gap: clamp(16px, 3vw, 36px); align-items: start; }
+@media (max-width: 900px) { .viewer { grid-template-columns: 1fr; } }
+.stage { position: relative; background: var(--frame); aspect-ratio: 5 / 3; cursor: crosshair; touch-action: manipulation; border-radius: var(--r-lg); }
+.stage svg { width: 100%; height: 100%; pointer-events: none; }
+.stage .dwg { padding: 3%; }
+.pin { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 0.8rem; font-weight: 700; display: grid; place-items: center; border: 2.5px solid #fff; cursor: pointer; padding: 0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); transition: transform 0.35s var(--spring); }
+.pin:hover { transform: scale(1.12); }
+.pin.resolved { background: var(--green); }
+.pin.draft { background: #fff; color: var(--accent); border: 2.5px dashed var(--accent); }
+.pin.active { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 40%, transparent), 0 2px 8px rgba(0, 0, 0, 0.3); }
+.thread { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow); }
+.thread li { padding: 16px 18px; display: grid; grid-template-columns: 28px 1fr; gap: 12px; position: relative; }
+.thread li + li::before { content: ""; position: absolute; left: 58px; right: 0; top: 0; border-top: 0.5px solid var(--line); }
+.thread .n { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 0.75rem; font-weight: 700; display: grid; place-items: center; }
+.thread li.resolved .n { background: var(--green); }
+.thread li.focus { background: var(--tint); }
+
+.docs { background: var(--card); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow); }
+.doc { display: grid; grid-template-columns: 1fr auto auto; gap: 8px 20px; padding: 16px 20px; align-items: center; position: relative; }
+.doc + .doc::before { content: ""; position: absolute; left: 20px; right: 0; top: 0; border-top: 0.5px solid var(--line); }
+.doc .type { font-weight: 600; font-size: 0.75rem; background: var(--tint); color: var(--link); padding: 4px 10px; border-radius: 999px; }
+@media (max-width: 600px) { .doc { grid-template-columns: 1fr auto; } .doc .meta { grid-column: 1 / -1; } }
+
+.chat { display: grid; gap: 6px; max-width: 720px; margin-bottom: 24px; }
+.bubble { max-width: 82%; padding: 9px 15px; background: var(--recv); border-radius: 20px 20px 20px 6px; justify-self: start; }
+.bubble.me { justify-self: end; background: var(--accent); color: #fff; border-radius: 20px 20px 6px 20px; }
+.bubble .who { font-size: 0.7rem; opacity: 0.7; display: block; margin-bottom: 1px; }
+.empty { background: var(--card); padding: 28px; color: var(--mute); border-radius: var(--r-md); text-align: center; }
+
+.plist { background: var(--card); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow); }
+.prow { display: grid; grid-template-columns: 180px 1fr auto; gap: 8px clamp(16px, 3vw, 36px); align-items: center; padding: 14px 20px 14px 14px; position: relative; transition: background 0.2s; }
+.prow + .prow::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; border-top: 0.5px solid var(--line); }
+.prow:hover, .prow:active { background: var(--fill); }
+.prow .thumb { background: var(--frame); aspect-ratio: 5 / 3; border-radius: var(--r-sm); }
+.prow .thumb svg { width: 100%; height: 100%; padding: 7%; }
+.prow h3 { margin-bottom: 4px; font-size: 1.15rem; }
+@media (max-width: 640px) { .prow { grid-template-columns: 92px 1fr; padding: 12px; } .prow .tag { grid-column: 2; justify-self: start; } }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 36px; }
+.stats div { background: var(--card); padding: 16px 18px; border-radius: var(--r-md); box-shadow: var(--shadow); }
+.stats strong { display: block; font-size: var(--step-2); font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: rgba(40, 40, 42, 0.92); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); color: #fff; padding: 13px 22px; border-radius: 16px; font-size: 0.9375rem; font-weight: 500; z-index: 60; max-width: calc(100vw - 32px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25); }
+.toast[hidden] { display: none; }
+.inline-form { display: grid; gap: 12px; max-width: 520px; margin-top: 28px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+select.inline { width: auto; padding: 8px 14px; }
+.work.static:hover, .work.static:active { transform: none; }
+
+.nav a.cta { background: var(--accent); color: #fff; padding: 7px 16px; border-radius: 999px; font-weight: 600; }
+.nav a.cta:hover { background: var(--accent-press); color: #fff; }
+@media (max-width: 760px) { .nav a.cta { background: none; color: var(--link); padding: 14px 0; border-radius: 0; font-weight: 600; } }
+.site-foot .col { display: flex; flex-direction: column; gap: 4px; }
+.page { padding-top: clamp(28px, 5vw, 64px); }
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(16px, 2.4vw, 28px); }
+@media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
+.large-title { font-size: clamp(2rem, 1.6rem + 1.6vw, 2.75rem); letter-spacing: -0.035em; }
+.lede { margin: 12px 0 28px; }
+.sheet { background: var(--card); padding: clamp(18px, 3vw, 28px); border-radius: var(--r-lg); box-shadow: var(--shadow); }
+.sheet .field:last-of-type { margin-bottom: 20px; }
+
+/* Uploaded pictures fill the same frames as the drawings. */
+img.upload { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.stage img.upload { border-radius: inherit; }
+input[type="file"] { padding: 10px 12px; }
+
+</style>
+</head>
+<body>
+  <a class="skip" href="#app">Skip to content</a>
+  <header class="site-head" id="head"></header>
+  <main id="app" tabindex="-1"></main>
+  <footer class="site-foot" id="foot"></footer>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <script>
+/* Sample data for the preview. In the real build this lives in the Supabase database. */
+window.SEED = {
+  studio: {
+    name: "triArch",
+    short: "triArch",
+    slogan: "Three points. One vision.",
+    email: "hello@triarch.example",
+    phone: "+00 000 000 000",
+    address: "12 Studio Street, Your City",
+  },
+
+  heroStats: [["62", "Projects completed"], ["48", "Happy clients"], ["9", "People in the studio"]],
+
+  successStats: [["62+", "Buildings completed since 2012"], ["48+", "Clients who came back for a second project"], ["300+", "Drawings reviewed online by clients last year"], ["98%", "Of milestones approved without a second round"]],
+
+  news: [
+    { title: "Kiln Primary School opens its doors", date: "2026-09-15", seed: 23, kind: "elevation", text: "The first pupils walked into the new classrooms this month." },
+    { title: "Harbour Offices shortlisted for a regional award", date: "2026-08-02", seed: 37, kind: "render", text: "The converted warehouse made the final list in the workplace category." },
+  ],
+
+  faq: [
+    ["How does the client portal work?", "Each client gets a private login. You can see the project timeline, look at the latest drawings and photos, approve milestones, and leave comments pinned to an exact spot on a drawing."],
+    ["What does the process look like?", "Every project moves through five phases: concept, design development, permits, construction and handover. You approve a milestone at the end of each stage before we move on."],
+    ["Do you work on projects remotely?", "Yes. Most design work can be done remotely, and the portal keeps everything in one place. We visit the site at key moments and at every stage of construction."],
+    ["Do I need an architect for a small project?", "Often yes. Even a small extension needs drawings for a permit, and an architect usually saves more in avoided mistakes than the fee costs. We are happy to tell you honestly if you do not need us."],
+  ],
+
+  phases: ["Concept", "Design development", "Permits", "Construction", "Handover"],
+
+  users: [
+    { id: "c1", role: "client", name: "Maya Reyes", email: "maya@example.com", projects: ["p1", "p2"] },
+    { id: "c2", role: "client", name: "Daniel Halden", email: "daniel@halden.example", projects: ["p3"] },
+    { id: "s1", role: "staff", name: "Elena Marku", email: "elena@triarch.example", projects: [] },
+  ],
+
+  portfolio: [
+    { slug: "ridge-house", name: "Ridge House", type: "Private house", place: "Ridge Road", year: 2025, size: "310 m²", seed: 11, kind: "elevation",
+      text: "A family house stepped into a south-facing slope. Three concrete volumes share one long roof, so every room looks down the valley and none look at the neighbours." },
+    { slug: "kiln-school", name: "Kiln Primary School", type: "School", place: "Old Brickworks site", year: 2024, size: "2,400 m²", seed: 23, kind: "elevation",
+      text: "A school built from the clay of the former brickworks it replaces. Classrooms open onto a shared courtyard and are lit from two sides." },
+    { slug: "harbour-offices", name: "Harbour Offices", type: "Workplace", place: "East Quay", year: 2024, size: "5,100 m²", seed: 37, kind: "elevation",
+      text: "A converted warehouse with a new timber floor inserted inside the original steel frame. The old crane rails now carry the lighting." },
+    { slug: "orchard-pavilion", name: "Orchard Pavilion", type: "Public building", place: "Municipal park", year: 2023, size: "140 m²", seed: 41, kind: "elevation",
+      text: "A small covered market and meeting space under one folded roof, open on all four sides." },
+    { slug: "stone-row", name: "Stone Row", type: "Housing", place: "Hill Street", year: 2023, size: "1,150 m²", seed: 53, kind: "elevation",
+      text: "Eight terraced homes on a narrow plot. Each has its own garden wall, stair and roof terrace." },
+    { slug: "lantern-library", name: "Lantern Library", type: "Public building", place: "Market Square", year: 2022, size: "1,800 m²", seed: 67, kind: "elevation",
+      text: "A neighbourhood library with a tall reading hall that glows at dusk. The reading hall is entered through the old market arcade." },
+  ],
+
+  projects: [
+    {
+      id: "p1", name: "House on the Ridge", client: "c1", place: "Ridge Road, plot 14", type: "Private house",
+      revision: "C", phaseIndex: 3, lastUpdate: "2026-10-09", seed: 5,
+      summary: "A two-storey family house with a concrete frame and timber infill. Structure is complete up to the first floor slab.",
+      milestones: [
+        { id: "m1", phase: 0, title: "Concept design approved", due: "2026-02-12", status: "done", note: "Massing, orientation and room layout agreed.", response: { decision: "approved", text: "We love the courtyard idea.", by: "Maya Reyes", at: "2026-02-13" } },
+        { id: "m2", phase: 1, title: "Final layouts and materials", due: "2026-04-30", status: "done", note: "Plans, sections and the material palette.", response: { decision: "approved", text: "", by: "Maya Reyes", at: "2026-05-02" } },
+        { id: "m3", phase: 2, title: "Building permit granted", due: "2026-07-15", status: "done", note: "Permit received from the municipality.", response: null },
+        { id: "m4", phase: 3, title: "Foundations and ground slab", due: "2026-08-28", status: "done", note: "Inspected and signed off by the engineer.", response: null },
+        { id: "m5", phase: 3, title: "Choose kitchen and bathroom fittings", due: "2026-10-23", status: "awaiting", note: "Three fitting packages are in the documents. Please pick one or tell us what to change.", response: null },
+        { id: "m6", phase: 3, title: "Roof structure complete", due: "2026-12-04", status: "upcoming", note: "", response: null },
+        { id: "m7", phase: 4, title: "Handover and walk-through", due: "2027-03-19", status: "upcoming", note: "", response: null },
+      ],
+      gallery: [
+        { id: "g1", title: "South elevation, revision C", kind: "elevation", seed: 5, date: "2026-09-18", pins: [
+          { id: "pin1", x: 62, y: 38, text: "Can the upstairs windows be taller? We'd like to see the hills from the bed.", author: "Maya Reyes", role: "client", at: "2026-09-20", resolved: false },
+        ] },
+        { id: "g2", title: "Ground floor plan", kind: "plan", seed: 8, date: "2026-09-18", pins: [] },
+        { id: "g3", title: "Exterior render, evening", kind: "render", seed: 5, date: "2026-09-02", pins: [] },
+        { id: "g4", title: "Site photo: first floor frame", kind: "photo", seed: 3, date: "2026-10-07", pins: [] },
+      ],
+      documents: [
+        { id: "d1", name: "Fittings options, three packages", type: "PDF", size: "4.2 MB", date: "2026-10-09", version: "v1" },
+        { id: "d2", name: "Architectural drawings, revision C", type: "PDF", size: "11.8 MB", date: "2026-09-18", version: "C" },
+        { id: "d3", name: "Structural engineer's report", type: "PDF", size: "2.1 MB", date: "2026-07-02", version: "v2" },
+        { id: "d4", name: "Building permit", type: "PDF", size: "0.9 MB", date: "2026-07-15", version: "-" },
+      ],
+      messages: [
+        { id: "ms1", from: "Elena Marku", role: "staff", text: "The first floor frame is up. Photos are in the gallery. The fittings packages are ready for your decision.", at: "2026-10-09T09:12:00" },
+        { id: "ms2", from: "Maya Reyes", role: "client", text: "Looks great! We'll go through the fittings this weekend.", at: "2026-10-09T18:40:00" },
+      ],
+    },
+    {
+      id: "p2", name: "Garden Studio", client: "c1", place: "Rear garden, Ridge Road 14", type: "Outbuilding",
+      revision: "A", phaseIndex: 1, lastUpdate: "2026-10-05", seed: 14,
+      summary: "A small timber studio at the end of the garden, to be built after the main house is finished.",
+      milestones: [
+        { id: "m8", phase: 0, title: "Concept design approved", due: "2026-07-10", status: "done", note: "", response: { decision: "approved", text: "", by: "Maya Reyes", at: "2026-07-11" } },
+        { id: "m9", phase: 1, title: "Review of layout options", due: "2026-10-30", status: "awaiting", note: "Two layouts: one with a loft, one without.", response: null },
+        { id: "m10", phase: 2, title: "Permit application submitted", due: "2027-01-15", status: "upcoming", note: "", response: null },
+      ],
+      gallery: [
+        { id: "g5", title: "Layout option A (with loft)", kind: "plan", seed: 21, date: "2026-10-05", pins: [] },
+        { id: "g6", title: "Layout option B (single storey)", kind: "plan", seed: 22, date: "2026-10-05", pins: [] },
+      ],
+      documents: [{ id: "d5", name: "Design brief", type: "PDF", size: "0.6 MB", date: "2026-06-20", version: "v1" }],
+      messages: [],
+    },
+    {
+      id: "p3", name: "Halden Clinic Fit-out", client: "c2", place: "2nd floor, Market Square 3", type: "Interior",
+      revision: "B", phaseIndex: 2, lastUpdate: "2026-10-08", seed: 30,
+      summary: "A dental clinic fit-out on the second floor of a listed building. Services routing is the main design challenge.",
+      milestones: [
+        { id: "m11", phase: 0, title: "Concept design approved", due: "2026-03-05", status: "done", note: "", response: { decision: "approved", text: "", by: "Daniel Halden", at: "2026-03-06" } },
+        { id: "m12", phase: 1, title: "Equipment layout confirmed", due: "2026-06-18", status: "done", note: "", response: { decision: "approved", text: "Chairs positioned to avoid the load-bearing wall.", by: "Daniel Halden", at: "2026-06-20" } },
+        { id: "m13", phase: 2, title: "Heritage office approval", due: "2026-10-20", status: "changes", note: "The heritage office asked for the reception counter to be set back from the stair.", response: { decision: "changes", text: "Can we keep the counter at least 1.2 m wide?", by: "Daniel Halden", at: "2026-10-08" } },
+        { id: "m14", phase: 2, title: "Fire safety sign-off", due: "2026-11-27", status: "upcoming", note: "", response: null },
+        { id: "m15", phase: 3, title: "Start on site", due: "2027-01-11", status: "upcoming", note: "", response: null },
+      ],
+      gallery: [
+        { id: "g7", title: "Floor plan, revision B", kind: "plan", seed: 33, date: "2026-10-01", pins: [] },
+        { id: "g8", title: "Reception, render", kind: "render", seed: 34, date: "2026-10-01", pins: [] },
+      ],
+      documents: [{ id: "d6", name: "Heritage office feedback", type: "PDF", size: "0.4 MB", date: "2026-10-06", version: "-" }],
+      messages: [{ id: "ms3", from: "Elena Marku", role: "staff", text: "The heritage office came back with one change. We've marked it as a milestone so you can respond.", at: "2026-10-07T14:00:00" }],
+    },
+  ],
+
+  team: [
+    { name: "Elena Marku", role: "Founding partner" },
+    { name: "Arben Leka", role: "Partner, technical design" },
+    { name: "Sofia Dervishi", role: "Architect, residential" },
+    { name: "Nikola Petrov", role: "Architect, public buildings" },
+    { name: "Ira Gjoka", role: "Project coordinator" },
+  ],
+
+  services: [
+    ["Architecture", "Concept through construction drawings for houses, workplaces and public buildings."],
+    ["Interiors", "Layouts, joinery and fittings for existing buildings."],
+    ["Planning and permits", "We prepare and submit applications and deal with the authorities."],
+    ["Site supervision", "Regular visits during construction, and sign-off at every stage."],
+  ],
+
+  news: [
+    { title: "Ridge House: the frame reaches the first floor", date: "2026-10-09", text: "The concrete frame is now complete up to the first floor slab. Roof structure is next.", seed: 3, kind: "photo" },
+    { title: "Follow your project from your phone", date: "2026-09-15", text: "Clients can now see progress, review drawings and send feedback in one private place.", seed: 41, kind: "render" },
+  ],
+
+  faq: [
+    ["How does the client portal work?", "After we start your project you get a private login. You see a timeline from concept to handover, the latest drawings and photos, and all documents. Nobody else can see your project."],
+    ["How do I give feedback on a drawing?", "Open the drawing and tap the exact spot you want to discuss. Write your comment and we are notified straight away. We reply in the same place."],
+    ["What happens when I approve a milestone?", "The milestone is marked done and the studio is told. If you ask for changes instead, we revise the drawings and send them back for another look."],
+    ["Can more than one person see our project?", "Yes. A couple, a family or a company team can each have their own login to the same project."],
+  ],
+};
+
+</script>
+  <script>
+/* Generates architectural line drawings, renders and "site photos" as SVG, so the preview needs no image files.
+   Each image is deterministic: the same seed always gives the same building. */
+(function () {
+  function rng(seed) {
+    let a = (seed * 2654435761) >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const pick = (r, n) => Math.floor(r() * n);
+
+  /* Builds the volumes of a building from a seed. Shared by elevation and render. */
+  function volumes(seed) {
+    const r = rng(seed);
+    const count = 2 + pick(r, 2);
+    const out = [];
+    let x = 135 + pick(r, 50);
+    for (let i = 0; i < count; i++) {
+      const w = 150 + pick(r, 120);
+      const h = 80 + pick(r, 130);
+      out.push({ x, w, h, roof: pick(r, 3), cols: Math.max(2, Math.floor(w / 62)), rows: Math.max(1, Math.floor(h / 76)), ribbon: r() > 0.55, door: i === 0 || r() > 0.7 });
+      x += w - 10 + pick(r, 50) * (i % 2 ? -0.3 : 1);
+    }
+    const start = out[0].x, end = out[out.length - 1].x + out[out.length - 1].w;
+    if (end > 735) {
+      const k = (735 - start) / (end - start);
+      out.forEach((v) => { v.x = start + (v.x - start) * k; v.w *= k; v.cols = Math.max(2, Math.floor(v.w / 62)); });
+    }
+    return out;
+  }
+
+  const GROUND = 410;
+
+  function elevation(seed, trace) {
+    const t = trace ? ' pathLength="1" class="tr"' : "";
+    const fl = trace ? ' class="fl"' : "";
+    const TINTS = ["#d9c9a6", "#c9a77c", "#c98f70", "#b9c29b"];
+    const r = rng(seed + 99);
+    let s = "", fills = "";
+    const vols = volumes(seed);
+    s += `<line x1="40" y1="${GROUND}" x2="760" y2="${GROUND}" stroke-width="2"${t}/>`;
+    for (let x = 50; x < 750; x += 22) s += `<line x1="${x}" y1="${GROUND + 4}" x2="${x - 10}" y2="${GROUND + 14}" stroke-width=".8" opacity=".5"/>`;
+    let maxTop = GROUND;
+    vols.forEach((v, i) => {
+      const top = GROUND - v.h;
+      maxTop = Math.min(maxTop, top);
+      const right = v.x + v.w;
+      const tint = TINTS[(i + seed) % TINTS.length];
+      const paint = `fill="${tint}" fill-opacity=".6" stroke="none"${fl}`;
+      if (v.roof === 0) {
+        fills += `<rect x="${v.x}" y="${top}" width="${v.w}" height="${v.h}" ${paint}/>`;
+        s += `<rect x="${v.x}" y="${top}" width="${v.w}" height="${v.h}"${t}/>`;
+        s += `<line x1="${v.x - 8}" y1="${top}" x2="${right + 8}" y2="${top}" stroke-width="3"${t}/>`;
+      } else {
+        const rise = v.roof === 1 ? 30 + pick(r, 30) : 40 + pick(r, 30);
+        const pts = v.roof === 1
+          ? `${v.x},${GROUND} ${v.x},${top} ${right},${top - rise} ${right},${GROUND}`
+          : `${v.x},${GROUND} ${v.x},${top} ${v.x + v.w / 2},${top - rise} ${right},${top} ${right},${GROUND}`;
+        fills += `<polygon points="${pts}" ${paint}/>`;
+        s += `<polygon points="${pts}"${t}/>`;
+        maxTop = Math.min(maxTop, top - rise);
+      }
+      if (v.ribbon) {
+        const y = top + 22;
+        s += `<rect x="${v.x + 14}" y="${y}" width="${v.w - 28}" height="26"${t}/>`;
+        for (let m = 1; m < v.cols; m++) s += `<line x1="${v.x + 14 + (m * (v.w - 28)) / v.cols}" y1="${y}" x2="${v.x + 14 + (m * (v.w - 28)) / v.cols}" y2="${y + 26}" stroke-width=".8"/>`;
+      }
+      for (let row = v.ribbon ? 1 : 0; row < v.rows; row++) {
+        for (let c = 0; c < v.cols; c++) {
+          if (r() < 0.18) continue;
+          const wx = v.x + (c + 0.5) * (v.w / v.cols) - 12;
+          const wy = top + 18 + row * 70;
+          if (wy + 38 > GROUND - 14) continue;
+          fills += `<rect x="${wx}" y="${wy}" width="24" height="38" fill="#f6f3e6" stroke="none"${fl}/>`;
+          s += `<rect x="${wx}" y="${wy}" width="24" height="38" stroke-width="1.2"${t}/>`;
+          s += `<line x1="${wx + 12}" y1="${wy}" x2="${wx + 12}" y2="${wy + 38}" stroke-width=".7"/>`;
+        }
+      }
+      if (v.door) {
+        const dx = v.x + 24 + pick(r, Math.max(10, v.w - 80));
+        s += `<rect x="${dx}" y="${GROUND - 62}" width="32" height="62" stroke-width="1.6"${t}/>`;
+      }
+      for (let k = 0; k < 6; k++) s += `<line x1="${right - 4 - k * 7}" y1="${top + 4}" x2="${right - 4 - k * 7}" y2="${GROUND - 2}" stroke-width=".5" opacity=".25"/>`;
+    });
+    /* tree */
+    const tc = [[50, GROUND - 98, 34], [30, GROUND - 70, 22], [70, GROUND - 74, 24]];
+    s += `<line x1="50" y1="${GROUND}" x2="50" y2="${GROUND - 66}" stroke-width="2"${t}/>`;
+    tc.forEach((c) => { fills += `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" fill="#8f9c67" fill-opacity=".5" stroke="none"${fl}/>`; s += `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" stroke-width="1"${t}/>`; });
+    fills += `<rect x="40" y="${GROUND}" width="720" height="12" fill="#b08a5b" fill-opacity=".3" stroke="none"${fl}/>`;
+    /* scale figure */
+    const fx = 108 + pick(r, 6);
+    s += `<circle cx="${fx}" cy="${GROUND - 56}" r="5" stroke-width="1.2"/><line x1="${fx}" y1="${GROUND - 51}" x2="${fx}" y2="${GROUND - 26}" stroke-width="1.2"/><line x1="${fx}" y1="${GROUND - 26}" x2="${fx - 6}" y2="${GROUND}" stroke-width="1.2"/><line x1="${fx}" y1="${GROUND - 26}" x2="${fx + 6}" y2="${GROUND}" stroke-width="1.2"/><line x1="${fx - 7}" y1="${GROUND - 44}" x2="${fx + 7}" y2="${GROUND - 44}" stroke-width="1.2"/>`;
+    /* dimension line */
+    const dx = 775, h = ((GROUND - maxTop) / 28).toFixed(2);
+    s += `<line x1="${dx}" y1="${maxTop}" x2="${dx}" y2="${GROUND}" stroke-width=".9"/><line x1="${dx - 6}" y1="${maxTop}" x2="${dx + 6}" y2="${maxTop}" stroke-width=".9"/><line x1="${dx - 6}" y1="${GROUND}" x2="${dx + 6}" y2="${GROUND}" stroke-width=".9"/>`;
+    s += `<text x="${dx - 8}" y="${(maxTop + GROUND) / 2}" font-size="12" text-anchor="middle" transform="rotate(-90 ${dx - 8} ${(maxTop + GROUND) / 2})" fill="currentColor" stroke="none">${h} m</text>`;
+    return { s: fills + s, top: maxTop };
+  }
+
+  function plan(seed) {
+    const r = rng(seed + 7);
+    const names = ["Living", "Kitchen", "Bedroom", "Study", "Bath", "Hall", "Store", "Studio", "Dining", "Utility"];
+    const X0 = 120, Y0 = 70, W = 560, H = 340;
+    const rooms = [];
+    (function split(x, y, w, h, depth) {
+      if (depth === 0 || (w < 150 && h < 130)) { rooms.push({ x, y, w, h }); return; }
+      const vertical = w > h * 1.1 ? true : h > w * 1.1 ? false : r() > 0.5;
+      const cut = 0.38 + r() * 0.24;
+      if (vertical && w > 150) { const a = w * cut; split(x, y, a, h, depth - 1); split(x + a, y, w - a, h, depth - 1); }
+      else if (h > 130) { const a = h * cut; split(x, y, w, a, depth - 1); split(x, y + a, w, h - a, depth - 1); }
+      else rooms.push({ x, y, w, h });
+    })(X0, Y0, W, H, 3);
+    let s = "";
+    rooms.forEach((m, i) => {
+      s += `<rect x="${m.x.toFixed(1)}" y="${m.y.toFixed(1)}" width="${m.w.toFixed(1)}" height="${m.h.toFixed(1)}" stroke-width="1.6"/>`;
+      s += `<text x="${(m.x + 10).toFixed(1)}" y="${(m.y + 20).toFixed(1)}" font-size="12" fill="currentColor" stroke="none">${names[(i + pick(r, 3)) % names.length]}</text>`;
+      /* door gap and swing */
+      const dx = m.x + m.w * 0.55, dy = m.y + m.h;
+      if (dy < Y0 + H - 1) s += `<line x1="${dx}" y1="${dy}" x2="${dx + 30}" y2="${dy}" style="stroke:var(--wash)" stroke-width="4"/><path d="M${dx} ${dy} A30 30 0 0 0 ${dx + 30} ${dy - 30}" stroke-width=".9"/><line x1="${dx + 30}" y1="${dy}" x2="${dx + 30}" y2="${dy - 30}" stroke-width=".9"/>`;
+    });
+    s += `<rect x="${X0}" y="${Y0}" width="${W}" height="${H}" stroke-width="4"/>`;
+    for (let k = 0; k < 3; k++) { const wx = X0 + 90 + k * 160; s += `<line x1="${wx}" y1="${Y0}" x2="${wx + 60}" y2="${Y0}" style="stroke:var(--wash)" stroke-width="6"/><line x1="${wx}" y1="${Y0 - 3}" x2="${wx + 60}" y2="${Y0 - 3}" stroke-width=".9"/><line x1="${wx}" y1="${Y0 + 3}" x2="${wx + 60}" y2="${Y0 + 3}" stroke-width=".9"/>`; }
+    s += `<line x1="${X0}" y1="${Y0 + H + 26}" x2="${X0 + W}" y2="${Y0 + H + 26}" stroke-width=".9"/><line x1="${X0}" y1="${Y0 + H + 20}" x2="${X0}" y2="${Y0 + H + 32}" stroke-width=".9"/><line x1="${X0 + W}" y1="${Y0 + H + 20}" x2="${X0 + W}" y2="${Y0 + H + 32}" stroke-width=".9"/>`;
+    s += `<text x="${X0 + W / 2}" y="${Y0 + H + 44}" font-size="12" text-anchor="middle" fill="currentColor" stroke="none">${(W / 40).toFixed(1)} m</text>`;
+    return s;
+  }
+
+  function render(seed, uid) {
+    const vols = volumes(seed);
+    let s = `<defs><linearGradient id="sky${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a3b32"/><stop offset="1" stop-color="#ecd0aa"/></linearGradient></defs>`;
+    s += `<rect width="800" height="480" fill="url(#sky${uid})" stroke="none"/><rect y="${GROUND}" width="800" height="70" fill="#3a3329" stroke="none"/>`;
+    const r = rng(seed + 5);
+    vols.forEach((v, i) => {
+      const top = GROUND - v.h;
+      const fill = ["#efe5cf", "#d9c3a0", "#f6eddc"][i % 3];
+      if (v.roof === 0) s += `<rect x="${v.x}" y="${top}" width="${v.w}" height="${v.h}" fill="${fill}" stroke="none"/>`;
+      else if (v.roof === 1) s += `<polygon points="${v.x},${GROUND} ${v.x},${top} ${v.x + v.w},${top - 40} ${v.x + v.w},${GROUND}" fill="${fill}" stroke="none"/>`;
+      else s += `<polygon points="${v.x},${GROUND} ${v.x},${top} ${v.x + v.w / 2},${top - 50} ${v.x + v.w},${top} ${v.x + v.w},${GROUND}" fill="${fill}" stroke="none"/>`;
+      for (let row = 0; row < v.rows; row++) for (let c = 0; c < v.cols; c++) {
+        if (r() < 0.2) continue;
+        const wx = v.x + (c + 0.5) * (v.w / v.cols) - 12, wy = top + 18 + row * 70;
+        if (wy + 38 > GROUND - 14) continue;
+        s += `<rect x="${wx}" y="${wy}" width="24" height="38" fill="${r() > 0.5 ? "#f7d98e" : "#4a4034"}" stroke="none"/>`;
+      }
+      s += `<rect x="${v.x + v.w - 14}" y="${top}" width="14" height="${v.h}" fill="#000" opacity=".12" stroke="none"/>`;
+    });
+    return s;
+  }
+
+  function photo(seed, uid) {
+    const r = rng(seed + 3);
+    let s = `<defs><linearGradient id="ph${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6dfcd"/><stop offset="1" stop-color="#bfb49b"/></linearGradient>
+      <filter id="no${uid}"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="${seed}"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .22 0"/></filter></defs>`;
+    s += `<rect width="800" height="480" fill="url(#ph${uid})" stroke="none"/><rect y="370" width="800" height="110" fill="#7d6c56" stroke="none"/>`;
+    s += `<rect x="90" y="330" width="560" height="26" fill="#a89f8a" stroke="none"/><rect x="90" y="356" width="560" height="14" fill="#6e604d" stroke="none"/>`;
+    for (let i = 0; i < 4; i++) { const x = 120 + i * 150; s += `<rect x="${x}" y="130" width="24" height="200" fill="#a79d86" stroke="none"/><rect x="${x + 20}" y="130" width="4" height="200" fill="#000" opacity=".15" stroke="none"/>`; }
+    s += `<rect x="90" y="120" width="560" height="20" fill="#9f9580" stroke="none"/>`;
+    for (let i = 0; i < 9; i++) { const x = 100 + i * 62 + pick(r, 8); s += `<line x1="${x}" y1="120" x2="${x + 20}" y2="330" stroke="#5b4e3c" stroke-width="2" opacity=".45"/>`; }
+    s += `<line x1="690" y1="60" x2="690" y2="370" stroke="#4a3f31" stroke-width="6"/><line x1="560" y1="70" x2="780" y2="70" stroke="#4a3f31" stroke-width="5"/><line x1="560" y1="70" x2="560" y2="120" stroke="#4a3f31" stroke-width="1"/>`;
+    s += `<rect width="800" height="480" filter="url(#no${uid})" stroke="none"/>`;
+    return s;
+  }
+
+  let counter = 0;
+  /* kind: elevation | plan | render | photo. Returns a complete <svg> string. */
+  window.drawing = function (kind, seed, opts) {
+    opts = opts || {};
+    const uid = ++counter;
+    const label = opts.label || kind;
+    let inner, line = "", vb = "0 0 800 480";
+    if (kind === "elevation") {
+      const e = elevation(seed, opts.trace); inner = e.s; line = "drawing";
+      const y0 = Math.max(0, e.top - 44);
+      vb = `0 ${y0} 800 ${GROUND + 34 - y0}`;
+    }
+    else if (kind === "plan") { inner = plan(seed); line = "drawing"; }
+    else if (kind === "render") inner = render(seed, uid);
+    else inner = photo(seed, uid);
+    const cls = line ? "dwg" : "img";
+    return `<svg class="${cls}" viewBox="${vb}" preserveAspectRatio="xMidYMid ${line ? "meet" : "slice"}" role="img" aria-label="${String(label).replace(/"/g, "&quot;")}" fill="none" stroke="currentColor" stroke-linecap="square" stroke-width="1.6">${inner}</svg>`;
+  };
+})();
+
+</script>
+  <script>
+window.CONFIG = { supabaseUrl: "", supabaseKey: "" };
+</script>
+  <script>
+/* triArch: website and client portal.
+   Plain JavaScript with no dependencies. It runs against one of two backends:
+   - the demo backend below (sample data kept in this browser, used when no database is configured), or
+   - the Supabase backend in supa.js (real logins and shared data), chosen in config.js. */
+(function () {
+  const S = window.SEED;
+  const $ = (s, el) => (el || document).querySelector(s);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  const uid = () => "x" + Math.random().toString(36).slice(2, 9);
+  const today = () => new Date().toISOString().slice(0, 10);
+  const fmt = (d) => (d ? new Date(String(d).slice(0, 10) + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
+  const fmtTime = (d) => (String(d).length > 10 ? fmt(d) + ", " + String(d).slice(11, 16) : fmt(d));
+
+  /* ---------- demo backend: sample data kept in this browser ---------- */
+  const KEY = "triarch_preview_v1";
+  function makeLocal() {
+    const fresh = () => ({ v: 1, session: null, projects: clone(S.projects) });
+    const load = () => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) return s; } catch (e) {} return fresh(); };
+    let state = load();
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+    const cur = () => S.users.find((u) => u.id === state.session) || null;
+    const proj = (id) => state.projects.find((p) => p.id === id);
+    const touch = (p) => { p.lastUpdate = today(); };
+    const note = (p, text) => p.messages.push({ id: uid(), from: "System", role: "system", text, at: new Date().toISOString().slice(0, 16) });
+    const nowStamp = () => new Date().toISOString().slice(0, 16);
+    const find = (pid, mid) => proj(pid).milestones.find((x) => x.id === mid);
+    const pinOf = (pid, gid, id) => proj(pid).gallery.find((x) => x.id === gid).pins.find((q) => q.id === id);
+    const B = {
+      demo: true,
+      onChange: null,
+      async init() { window.addEventListener("storage", (e) => { if (e.key === KEY) { state = load(); if (B.onChange) B.onChange(); } }); },
+      async refresh() {},
+      user: cur,
+      projects: () => state.projects.map((p) => { p.clientName = (S.users.find((u) => u.id === p.client) || {}).name || ""; return p; }),
+      clients: () => S.users.filter((u) => u.role === "client").map((u) => ({ id: u.id, name: u.name })),
+      demoUsers: () => S.users,
+      async signIn(email, password) {
+        const found = S.users.find((x) => x.email.toLowerCase() === String(email).toLowerCase());
+        if (!found || password !== "preview") throw new Error("That email and password don't match. In this preview the password is “preview”, or use one of the accounts below.");
+        state.session = found.id; save();
+      },
+      async signInAs(id) { state.session = id; save(); },
+      async signOut() { state.session = null; save(); },
+      async reset() { const u = cur(); state = fresh(); state.session = u && u.id; save(); },
+      async approve(pid, mid) { const u = cur(), P = proj(pid), m = find(pid, mid); m.status = "done"; m.response = { decision: "approved", text: "", by: u.name, at: today() }; note(P, `${u.name} approved “${m.title}”.`); touch(P); save(); },
+      async requestChanges(pid, mid, text) { const u = cur(), P = proj(pid), m = find(pid, mid); m.status = "changes"; m.response = { decision: "changes", text, by: u.name, at: today() }; note(P, `${u.name} asked for changes to “${m.title}”.`); touch(P); save(); },
+      async addPin(pid, gid, x, y, text) { const u = cur(), P = proj(pid); P.gallery.find((g) => g.id === gid).pins.push({ id: uid(), x: Math.round(x), y: Math.round(y), text, author: u.name, role: u.role, at: today(), resolved: false, replies: [] }); touch(P); save(); },
+      async replyPin(pid, gid, id, text) { const u = cur(), x = pinOf(pid, gid, id); (x.replies = x.replies || []).push({ author: u.name, role: u.role, text, at: today() }); touch(proj(pid)); save(); },
+      async toggleResolve(pid, gid, id) { const x = pinOf(pid, gid, id); x.resolved = !x.resolved; touch(proj(pid)); save(); },
+      async sendMessage(pid, text) { const u = cur(), P = proj(pid); P.messages.push({ id: uid(), from: u.name, role: u.role, text, at: nowStamp(), mine: true }); touch(P); save(); },
+      async sendContact() {},
+      async setPhase(pid, phase, revision) { const P = proj(pid); P.phaseIndex = phase; P.revision = revision || P.revision; touch(P); save(); },
+      async setMilestoneStatus(pid, mid, status) { const P = proj(pid), m = find(pid, mid); m.status = status; if (status === "awaiting") note(P, `The studio asked for your feedback on “${m.title}”.`); touch(P); save(); },
+      async addMilestone(pid, m) { const P = proj(pid); P.milestones.push({ id: uid(), phase: m.phase, title: m.title, due: m.due, status: "upcoming", note: m.note, response: null }); touch(P); save(); },
+      async addImage(pid, g) { const P = proj(pid); P.gallery.unshift({ id: uid(), title: g.title, kind: g.kind, seed: 100 + Math.floor(Math.random() * 900), date: today(), pins: [] }); touch(P); note(P, `The studio added “${g.title}” to the gallery.`); save(); },
+      async addDoc(pid, d) { const P = proj(pid); P.documents.unshift({ id: uid(), name: d.name, type: d.type, size: "n/a", date: today(), version: d.version || "v1" }); touch(P); note(P, `The studio added the document “${d.name}”.`); save(); },
+      async docUrl() { return null; },
+      async addProject(f) { const id = uid(); state.projects.unshift({ id, name: f.name, client: f.client, place: f.place, type: f.type, revision: "A", phaseIndex: 0, lastUpdate: today(), seed: 100 + Math.floor(Math.random() * 900), summary: f.summary, milestones: [], gallery: [], documents: [], messages: [] }); save(); return id; },
+    };
+    return B;
+  }
+
+  let B = null; /* the backend in use */
+  let ui = {}; /* transient interface state: open forms, pin being placed */
+
+  const user = () => B.user();
+  const isStaff = () => { const u = user(); return !!u && u.role === "staff"; };
+  const proj = (id) => B.projects().find((p) => p.id === id);
+  const clientOf = (p) => ({ name: p.clientName || "" });
+
+  function progress(p) {
+    const n = S.phases.length;
+    const inPhase = p.milestones.filter((m) => m.phase === p.phaseIndex);
+    const frac = inPhase.length ? inPhase.filter((m) => m.status === "done").length / inPhase.length : 0;
+    return Math.min(100, Math.round(((p.phaseIndex + frac) / n) * 100));
+  }
+  const awaiting = (p) => p.milestones.filter((m) => m.status === "awaiting");
+  const changes = (p) => p.milestones.filter((m) => m.status === "changes");
+  const openPins = (p) => p.gallery.reduce((n, g) => n + g.pins.filter((x) => !x.resolved).length, 0);
+
+  function toast(msg) {
+    const t = $("#toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 3200);
+  }
+  const go = (path) => { location.hash = "#" + path; };
+
+  /* ---------- shell ---------- */
+  function headHTML(area) {
+    const u = user();
+    const home = u ? (u.role === "staff" ? "/admin" : "/portal") : "/login";
+    const cur = (a) => (area === a ? ' aria-current="page"' : "");
+    return `<div class="pill">
+      <a class="brand" href="#/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text"><span class="brand-name">${esc(S.studio.name)}</span><span class="brand-slogan">${esc(S.studio.slogan)}</span></span></a>
+      <button class="menu-btn" data-act="menu" aria-expanded="false" aria-controls="nav">Menu</button>
+      <nav class="nav" id="nav" aria-label="Main">
+        <a href="#/projects"${cur("projects")}>Projects</a>
+        <a href="#/studio"${cur("studio")}>Studio</a>
+        <a href="#/contact"${cur("contact")}>Contact</a>
+        ${u ? `<a href="#${home}"${cur("portal")}>${u.role === "staff" ? "Admin" : "Your projects"}</a><button class="linklike" data-act="logout">Sign out</button>` : `<a class="cta" href="#/login"${cur("login")}>Client login</a>`}
+      </nav></div>`;
+  }
+  function footHTML() {
+    return `<div class="wrap">
+      <div class="col"><strong>${esc(S.studio.name)}</strong><span class="muted">${esc(S.studio.address)}</span></div>
+      <div class="col"><a class="link" href="mailto:${esc(S.studio.email)}">${esc(S.studio.email)}</a><span class="muted">${esc(S.studio.phone)}</span></div>
+      <div class="col"><a class="link" href="#/login">Client login</a><a class="link" href="#/projects">Projects</a>${B.demo ? '<span class="muted">Preview with sample data</span>' : ""}</div></div>`;
+  }
+
+  /* ---------- public pages ---------- */
+  const sqm = () => S.portfolio.reduce((n, w) => n + (parseInt(String(w.size).replace(/[^0-9]/g, ""), 10) || 0), 0);
+  function workCard(w) {
+    return `<a class="work" href="#/projects/${w.slug}">
+      <div class="work-img">${drawing(w.kind, w.seed, { label: w.name + ", elevation" })}</div>
+      <div class="work-cap"><strong>${esc(w.name)}</strong><span class="muted small">${esc(w.type)}, ${w.year}</span><span class="link">View project</span></div></a>`;
+  }
+  function home() {
+    const feat = S.portfolio[3];
+    const stat = (i, cls) => `<div class="widget ${cls || ""}"><strong>${esc(S.successStats[i][0])}</strong><span>${esc(S.successStats[i][1])}</span></div>`;
+    return { title: S.studio.slogan, area: "home", html: `
+      <div class="wrap hero">
+        <h1>${esc(S.studio.slogan)}</h1>
+        <p class="lead">${esc(S.studio.short)} is a small architecture studio for houses, schools and workplaces. We stay with every project from the first sketch to handover.</p>
+        <div class="hero-actions"><a class="btn" href="#/contact">Book a consultation</a><a class="btn ghost" href="#/projects">See our work</a></div>
+        <dl class="hero-stats">${S.heroStats.map((x) => `<div><dt>${esc(x[0])}</dt><dd>${esc(x[1])}</dd></div>`).join("")}</dl>
+        <div class="hero-drawing">${drawing("elevation", feat.seed, { trace: true, label: feat.name + ", elevation" })}</div>
+        <div class="hero-caption"><span>${esc(feat.name)}, south elevation</span><a class="link" href="#/projects/${feat.slug}">See the project</a></div>
+      </div>
+
+      <section class="wrap section" aria-labelledby="about">
+        <p class="idx">01 About us</p>
+        <div class="section-intro"><h2 id="about">Design with purpose. Build with care.</h2>
+          <p>${esc(S.studio.name)} is a studio of nine architects. We listen first, draw carefully, and make sure what gets built matches what we promised. Every client follows their building online and can tell us what they think at each stage.</p></div>
+        <div class="duo">
+          <figure class="shot"><div class="frame">${drawing("elevation", S.portfolio[0].seed, { label: "Ridge House, elevation" })}</div><figcaption>Ridge House, south elevation</figcaption></figure>
+          <figure class="shot"><div class="frame">${drawing("plan", 8, { label: "House plan" })}</div><figcaption>Ground floor plan, private house</figcaption></figure>
+        </div>
+      </section>
+
+      <section class="wrap section" aria-labelledby="success">
+        <p class="idx">02 Our success</p>
+        <div class="section-intro"><h2 id="success">Expert guidance at every stage of your project.</h2>
+          <p>From the first idea to the keys in your hand, we keep the work clear and the decisions yours.</p></div>
+        <div class="bento">
+          ${stat(0, "t-blue")}${stat(1)}
+          <div class="widget photo" role="img" aria-label="Exterior render">${drawing("render", 5, { label: "Exterior render, evening" })}</div>
+          <div class="widget photo" role="img" aria-label="Site photo">${drawing("photo", 3, { label: "Site photo, concrete frame" })}</div>
+          ${stat(2, "t-green")}${stat(3, "t-orange")}
+        </div>
+      </section>
+
+      <section class="wrap section" aria-labelledby="proj">
+        <p class="idx">03 Projects</p>
+        <div class="section-intro"><div><h2 id="proj">Buildings we are proud of.</h2></div>
+          <div><p>A selection of recent houses, schools and public buildings.</p><a class="btn" href="#/projects">View all projects</a></div></div>
+        <div class="works">${S.portfolio.slice(0, 4).map(workCard).join("")}</div>
+      </section>
+
+      <section class="wrap section" aria-labelledby="news">
+        <p class="idx">04 News</p>
+        <div class="section-intro"><h2 id="news">Recent news from the studio.</h2><p>Openings, awards and what we are working on.</p></div>
+        <div class="works">${S.news.map((n) => `<article class="work static"><div class="work-img">${drawing(n.kind, n.seed, { label: n.title })}</div><div class="work-cap"><strong>${esc(n.title)}</strong><span class="muted small">${fmt(n.date)}</span></div></article>`).join("")}</div>
+      </section>
+
+      <section class="wrap section" aria-labelledby="faq">
+        <p class="idx">05 FAQs</p>
+        <div class="section-intro"><h2 id="faq">Answers to common questions.</h2><p>Not here? Send us a message and we will reply within two working days.</p></div>
+        <div class="faq">${S.faq.map((q, i) => `<details${i === 0 ? " open" : ""}><summary>${esc(q[0])}</summary><p>${esc(q[1])}</p></details>`).join("")}</div>
+      </section>
+
+      <section class="wrap section" aria-label="Get started">
+        <div class="cta-pair">
+          <div class="cta-card tint"><div><h2>Start a project</h2><p class="muted" style="margin-top:12px">Tell us about your site and what you would like to build.</p></div><div><a class="btn" href="#/contact">Get in touch</a></div></div>
+          <div class="cta-card"><div><h2>Already a client?</h2><p class="muted" style="margin-top:12px">Follow progress, review drawings and send feedback.</p></div><div><a class="btn ghost" href="#/login">Client login</a></div></div>
+        </div>
+      </section>` };
+  }
+  function projectsPage() {
+    return { title: "Projects", area: "projects", html: `<div class="wrap page"><div class="section-head"><h1>Projects</h1><p class="muted">${S.portfolio.length} completed buildings</p></div><div class="cards">${S.portfolio.map(workCard).join("")}</div></div>` };
+  }
+  function projectPage(slug) {
+    const i = S.portfolio.findIndex((w) => w.slug === slug);
+    if (i < 0) return notFound();
+    const w = S.portfolio[i], next = S.portfolio[(i + 1) % S.portfolio.length];
+    return { title: w.name, area: "projects", html: `
+      <div class="wrap page">
+        <p class="small"><a class="link" href="#/projects">Projects</a></p>
+        <h1 style="margin-top:10px">${esc(w.name)}</h1>
+        <dl class="facts"><div><dt>Type</dt><dd>${esc(w.type)}</dd></div><div><dt>Location</dt><dd>${esc(w.place)}</dd></div><div><dt>Completed</dt><dd>${w.year}</dd></div><div><dt>Floor area</dt><dd>${esc(w.size)}</dd></div></dl>
+        <div class="big-img">${drawing(w.kind, w.seed, { label: w.name + ", elevation" })}</div>
+        <div class="cols" style="margin-top:36px"><div></div><p>${esc(w.text)}</p></div>
+        <div style="margin-top:56px"><p class="muted small">Next project</p><h2 style="margin-top:6px"><a href="#/projects/${next.slug}">${esc(next.name)}</a></h2></div>
+      </div>` };
+  }
+  function studioPage() {
+    return { title: "Studio", area: "studio", html: `
+      <div class="wrap page">
+        <h1 style="max-width:18ch">A small studio that stays involved until the building is finished.</h1>
+        <div class="cols" style="margin-top:48px"><div><h2>Services</h2></div>
+          <dl class="rows">${S.services.map((s) => `<div><dt>${esc(s[0])}</dt><dd>${esc(s[1])}</dd></div>`).join("")}</dl></div>
+        <div class="cols" style="margin-top:64px"><div><h2>People</h2></div>
+          <div class="rows">${S.team.map((t) => `<div><span class="k">${esc(t.name)}</span><span class="muted">${esc(t.role)}</span></div>`).join("")}</div></div>
+      </div>` };
+  }
+  function contactPage() {
+    return { title: "Contact", area: "contact", html: `
+      <div class="wrap page"><div class="cols">
+        <div><h1>Contact</h1><p class="muted" style="margin-top:14px">Tell us about the site and what you would like to build. We reply within two working days.</p><p style="margin-top:24px"><a class="link" href="mailto:${esc(S.studio.email)}">${esc(S.studio.email)}</a><br>${esc(S.studio.phone)}<br>${esc(S.studio.address)}</p></div>
+        <form class="sheet" data-form="contact" novalidate>
+          <div class="form-row"><div class="field"><label for="c-name">Your name</label><input id="c-name" name="name" autocomplete="name" required></div>
+          <div class="field"><label for="c-email">Email</label><input id="c-email" name="email" type="email" autocomplete="email" required></div></div>
+          <div class="field"><label for="c-type">What are you planning?</label><select id="c-type" name="type"><option>A new house</option><option>A renovation or extension</option><option>A workplace or shop</option><option>A public building</option><option>Something else</option></select></div>
+          <div class="field"><label for="c-msg">Message</label><textarea id="c-msg" name="message" required></textarea></div>
+          <div id="c-err"></div>
+          <button class="btn" type="submit" style="width:100%">Send message</button>
+        </form></div></div>` };
+  }
+  function notFound() {
+    return { title: "Page not found", area: "", html: `<div class="wrap page"><h1>We can't find that page</h1><p class="muted" style="margin-top:14px">The link may be old. Go back to the <a href="#/">home page</a>.</p></div>` };
+  }
+
+  /* ---------- login ---------- */
+  function loginPage() {
+    const demos = B.demo ? B.demoUsers().map((u) => `<button class="demo" data-act="login" data-id="${u.id}"><span>${esc(u.name)}</span><span class="muted small">${u.role === "staff" ? "Studio staff" : "Client"}</span></button>`).join("") : "";
+    return { title: "Client login", area: "login", html: `
+      <div class="wrap"><div class="auth">
+        <h1>Client login</h1>
+        <p class="muted lede">Sign in to see your projects, drawings and messages.</p>
+        <form class="sheet" data-form="login" novalidate>
+          ${ui.loginError ? `<p class="error" role="alert">${esc(ui.loginError)}</p>` : ""}
+          <div class="field"><label for="l-email">Email</label><input id="l-email" name="email" type="email" autocomplete="username" required></div>
+          <div class="field"><label for="l-pass">Password</label><input id="l-pass" name="password" type="password" autocomplete="current-password" required></div>
+          <button class="btn" type="submit" style="width:100%">Sign in</button>
+        </form>
+        ${B.demo ? `<h2 style="font-size:var(--step-1);margin:40px 0 4px">Try the preview</h2>
+        <p class="hint" style="margin-bottom:12px">This preview has no real accounts. Pick one to sign in.</p>
+        <div class="demo-list group">${demos}</div>` : `<p class="hint" style="margin-top:20px">Accounts are created by the studio. If you cannot sign in, <a class="link" href="#/contact">contact us</a>.</p>`}
+      </div></div>` };
+  }
+
+  /* ---------- portal and admin ---------- */
+  function portalRoute(area, id, tab, sub) {
+    const u = user();
+    if (!u) { ui.next = location.hash; go("/login"); return { title: "Client login", area: "login", html: "" }; }
+    if (area === "admin" && u.role !== "staff") { go("/portal"); return { title: "", area: "", html: "" }; }
+    if (area === "portal" && u.role === "staff") { go("/admin"); return { title: "", area: "", html: "" }; }
+    if (!id) return area === "admin" ? adminHome() : clientHome();
+    const p = proj(id);
+    if (!p || (u.role === "client" && !u.projects.includes(p.id))) return notFound();
+    tab = ["overview", "gallery", "documents", "messages"].includes(tab) ? tab : "overview";
+    const inner = { overview: overviewTab, gallery: galleryTab, documents: documentsTab, messages: messagesTab }[tab](area, p, sub);
+    return { title: p.name, area: "portal", tabbar: true, html: shell(area, p, tab, inner) };
+  }
+
+  function projectRow(area, p) {
+    const n = isStaff() ? changes(p).length : awaiting(p).length;
+    const tagText = isStaff() ? (n ? `${n} change request${n > 1 ? "s" : ""}` : "") : (n ? `${n} need${n > 1 ? "" : "s"} your feedback` : "");
+    return `<a class="prow" href="#/${area}/${p.id}">
+      <div class="thumb">${drawing("elevation", p.seed, { label: p.name })}</div>
+      <div><h3>${esc(p.name)}</h3><p class="muted small">${esc(S.phases[p.phaseIndex])}, ${progress(p)}% complete. Updated ${fmt(p.lastUpdate)}</p></div>
+      ${tagText ? `<span class="tag ${isStaff() ? "hatch" : "alert"}">${tagText}</span>` : ""}</a>`;
+  }
+  function clientHome() {
+    const u = user();
+    const list = B.projects().filter((p) => u.projects.includes(p.id));
+    return { title: "Your projects", area: "portal", html: `<div class="wrap portal-head"><h1 class="large-title">Your projects</h1><p class="muted" style="margin:8px 0 28px">Signed in as ${esc(u.name)}</p>
+      <div class="plist">${list.map((p) => projectRow("portal", p)).join("") || '<p class="empty">No projects yet.</p>'}</div></div>` };
+  }
+  function adminHome() {
+    const list = B.projects();
+    const todo = [];
+    list.forEach((p) => {
+      changes(p).forEach((m) => todo.push({ p, tab: "overview", text: `${clientOf(p).name} asked for changes: ${m.title}` }));
+      const o = openPins(p); if (o) todo.push({ p, tab: "gallery", text: `${o} open comment${o > 1 ? "s" : ""} on drawings` });
+      awaiting(p).forEach((m) => todo.push({ p, tab: "overview", text: `Waiting for ${clientOf(p).name}: ${m.title}`, quiet: true }));
+    });
+    const stat = (n, l) => `<div><strong>${n}</strong><span class="muted small">${l}</span></div>`;
+    return { title: "Admin", area: "portal", html: `<div class="wrap portal-head">
+      <div class="section-head"><h1 class="large-title">Studio admin</h1>${B.demo ? '<button class="btn ghost sm" data-act="reset">Reset sample data</button>' : ""}</div>
+      <div class="stats">${stat(list.length, "active projects")}${stat(list.reduce((n, p) => n + awaiting(p).length, 0), "waiting for clients")}${stat(list.reduce((n, p) => n + changes(p).length, 0), "change requests")}${stat(list.reduce((n, p) => n + openPins(p), 0), "open drawing comments")}</div>
+      <h2 style="font-size:var(--step-1);margin-bottom:14px">Needs attention</h2>
+      <div class="rows" style="margin-bottom:48px">${todo.map((t) => `<div><a class="k" href="#/admin/${t.p.id}/${t.tab}">${esc(t.p.name)}</a><span class="${t.quiet ? "muted" : ""}">${esc(t.text)}</span></div>`).join("") || '<p class="empty">Nothing needs attention.</p>'}</div>
+      <h2 style="font-size:var(--step-1);margin-bottom:14px">All projects</h2><div class="plist">${list.map((p) => projectRow("admin", p)).join("") || '<p class="empty">No projects yet. Add the first one below.</p>'}</div>
+      ${newProjectForm()}</div>` };
+  }
+
+  function newProjectForm() {
+    const cl = B.clients();
+    return `<form class="inline-form" data-form="add-project" style="margin-top:48px"><h3 style="font-size:1.1rem">Add a project</h3>
+      <div class="field" style="margin:0"><label for="np-n">Project name</label><input id="np-n" name="name" required></div>
+      <div class="form-row"><div class="field" style="margin:0"><label for="np-p">Location</label><input id="np-p" name="place"></div>
+      <div class="field" style="margin:0"><label for="np-t">Type</label><input id="np-t" name="type" placeholder="Private house"></div></div>
+      <div class="field" style="margin:0"><label for="np-c">Client</label><select id="np-c" name="client"><option value="">No client yet</option>${cl.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select></div>
+      ${B.demo ? "" : '<p class="hint">Clients appear here after you create their account (see the setup notes).</p>'}
+      <div class="field" style="margin:0"><label for="np-s">Short description</label><input id="np-s" name="summary"></div>
+      <div><button class="btn sm" type="submit">Add project</button></div></form>`;
+  }
+  /* An uploaded image if there is one, otherwise the generated placeholder drawing. */
+  const media = (g, label) => (g.url ? `<img class="upload" src="${esc(g.url)}" alt="${esc(label)}" loading="lazy" draggable="false">` : drawing(g.kind, g.seed, { label }));
+
+  function shell(area, p, tab, inner) {
+    const staff = area === "admin";
+    const base = `#/${area}/${p.id}`;
+    const nA = staff ? changes(p).length : awaiting(p).length, nP = openPins(p);
+    const ICON = {
+      overview: '<path d="M5 20V10M12 20V4M19 20v-7"/>',
+      gallery: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/>',
+      documents: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
+      messages: '<path d="M4 5h16v11H9l-5 4z"/>',
+    };
+    const items = [["overview", "Progress", "Progress", nA], ["gallery", "Drawings and photos", "Drawings", nP], ["documents", "Documents", "Documents", 0], ["messages", "Messages", "Messages", 0]];
+    const badge = (n) => (n ? `<span class="count" aria-label="${n} to look at">${n}</span>` : "");
+    const t = (it) => `<a href="${base}/${it[0]}"${tab === it[0] ? ' aria-current="page"' : ""}>${it[1]}${badge(it[3])}</a>`;
+    const tb = (it) => `<a href="${base}/${it[0]}"${tab === it[0] ? ' aria-current="page"' : ""}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[it[0]]}</svg>${it[2]}${badge(it[3])}</a>`;
+    const c = clientOf(p);
+    return `<div class="wrap portal-head">
+      <p class="crumb"><a href="#/${area}">${staff ? "Admin" : "Your projects"}</a></p>
+      <div class="title-block" role="group" aria-label="Project details">
+        <div class="name"><span class="k">Project</span><h1 class="v">${esc(p.name)}</h1></div>
+        <div${staff ? "" : ' class="hide-sm"'}><span class="k">Client</span><span class="v">${esc(c.name)}</span></div>
+        <div class="hide-sm"><span class="k">Location</span><span class="v">${esc(p.place)}</span></div>
+        <div class="hide-sm"><span class="k">Type</span><span class="v">${esc(p.type)}</span></div>
+        <div><span class="k">Phase</span><span class="v">${esc(S.phases[p.phaseIndex])}</span></div>
+        <div><span class="k">Progress</span><span class="v">${progress(p)}%</span></div>
+        <div><span class="k">Drawing revision</span><span class="v">${esc(p.revision)}</span></div>
+        <div><span class="k">Last update</span><span class="v">${fmt(p.lastUpdate)}</span></div>
+      </div>
+      <nav class="tabs" aria-label="Project sections">${items.map(t).join("")}</nav>
+      ${inner}</div>
+      <nav class="tabbar" aria-label="Project sections, phone">${items.map(tb).join("")}</nav>`;
+  }
+
+  function overviewTab(area, p) {
+    const staff = area === "admin";
+    const phases = S.phases.map((n, i) => {
+      const cls = i < p.phaseIndex ? "done" : i === p.phaseIndex ? "current" : "upcoming";
+      const inPh = p.milestones.filter((m) => m.phase === i), f = inPh.length ? Math.round((inPh.filter((m) => m.status === "done").length / inPh.length) * 100) : 0;
+      return `<li class="phase ${cls}" style="--f:${f}%"${cls === "current" ? ' aria-current="step"' : ""}><b>${esc(n)}</b>${cls === "done" ? "Done" : cls === "current" ? "In progress" : "Upcoming"}</li>`;
+    }).join("");
+    const ms = p.milestones.slice().sort((a, b) => a.due.localeCompare(b.due)).map((m) => milestoneHTML(area, p, m)).join("");
+    return `<section class="panel" aria-labelledby="prog">
+        <div class="pct"><strong>${progress(p)}%</strong><span class="muted" id="prog">complete. Now in ${esc(S.phases[p.phaseIndex]).toLowerCase()}</span></div>
+        <ol class="progress" aria-label="Project phases">${phases}</ol>
+        <p class="muted" style="margin-top:8px">${esc(p.summary)}</p>
+        ${staff ? `<form class="toolbar" data-form="phase" data-p="${p.id}" style="margin-top:20px"><label for="ph" class="small">Current phase</label><select class="inline" id="ph" name="phase">${S.phases.map((n, i) => `<option value="${i}"${i === p.phaseIndex ? " selected" : ""}>${esc(n)}</option>`).join("")}</select><label for="rv" class="small">Drawing revision</label><input class="inline" style="width:76px;padding:8px 12px" id="rv" name="revision" value="${esc(p.revision)}" maxlength="3"><button class="btn sm" type="submit">Save</button></form>` : ""}
+      </section>
+      <section class="panel" aria-labelledby="mst"><div class="section-head"><h2 id="mst" style="font-size:var(--step-1)">Milestones</h2></div>
+        <ul class="ms-list">${ms}</ul>
+        ${staff ? addMilestoneForm(p) : ""}
+      </section>`;
+  }
+  function milestoneHTML(area, p, m) {
+    const staff = area === "admin";
+    const tag = { done: ['solid', "Done"], awaiting: ["alert", staff ? "Waiting for client" : "Needs your feedback"], changes: ["hatch", "Changes requested"], upcoming: ["quiet", "Upcoming"] }[m.status];
+    let body = "";
+    if (m.note) body += `<p>${esc(m.note)}</p>`;
+    if (m.response) body += `<p class="quote"><strong>${esc(m.response.by)}</strong>, ${fmt(m.response.at)}: ${m.response.decision === "approved" ? "Approved." : "Asked for changes."} ${esc(m.response.text)}</p>`;
+    if (!staff && m.status === "awaiting") {
+      body += ui.changesFor === m.id
+        ? `<form class="reply" data-form="changes" data-p="${p.id}" data-m="${m.id}"><div class="field" style="margin:0"><label for="ch-${m.id}">What should change?</label><textarea id="ch-${m.id}" name="text" required></textarea></div><div class="actions"><button class="btn sm" type="submit">Send to studio</button><button class="btn ghost sm" type="button" data-act="cancel-changes">Cancel</button></div></form>`
+        : `<div class="actions"><button class="btn sm" data-act="approve" data-p="${p.id}" data-m="${m.id}">Approve</button><button class="btn ghost sm" data-act="open-changes" data-m="${m.id}">Request changes</button></div>`;
+    }
+    if (!staff && m.status === "changes") body += `<p class="muted small">The studio is working on your changes.</p>`;
+    if (staff) body += `<form class="toolbar" data-form="ms-status" data-p="${p.id}" data-m="${m.id}"><label class="small" for="st-${m.id}">Status</label><select class="inline" id="st-${m.id}" name="status">${[["upcoming", "Upcoming"], ["awaiting", "Waiting for client"], ["changes", "Changes requested"], ["done", "Done"]].map((o) => `<option value="${o[0]}"${o[0] === m.status ? " selected" : ""}>${o[1]}</option>`).join("")}</select><button class="btn ghost sm" type="submit">Update</button></form>`;
+    return `<li class="ms ${m.status}"><span class="dot" aria-hidden="true"></span>
+      <div><h3>${esc(m.title)}</h3><div class="meta">${esc(S.phases[m.phase])}, due ${fmt(m.due)}</div></div>
+      <span class="tag ${tag[0]}">${tag[1]}</span>${body ? `<div class="body">${body}</div>` : ""}</li>`;
+  }
+  function addMilestoneForm(p) {
+    return `<form class="inline-form" data-form="add-ms" data-p="${p.id}"><h3 style="font-size:1.1rem">Add a milestone</h3>
+      <div class="field" style="margin:0"><label for="nm-t">Title</label><input id="nm-t" name="title" required></div>
+      <div class="form-row"><div class="field" style="margin:0"><label for="nm-p">Phase</label><select id="nm-p" name="phase">${S.phases.map((n, i) => `<option value="${i}"${i === p.phaseIndex ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></div>
+      <div class="field" style="margin:0"><label for="nm-d">Due date</label><input id="nm-d" name="due" type="date" required></div></div>
+      <div class="field" style="margin:0"><label for="nm-n">Note for the client</label><input id="nm-n" name="note"></div>
+      <div><button class="btn sm" type="submit">Add milestone</button></div></form>`;
+  }
+
+  function galleryTab(area, p, gid) {
+    const staff = area === "admin";
+    if (gid) {
+      const g = p.gallery.find((x) => x.id === gid);
+      if (!g) return `<div class="panel"><p class="empty">That image no longer exists.</p></div>`;
+      return viewer(area, p, g);
+    }
+    const tiles = p.gallery.map((g) => {
+      const n = g.pins.filter((x) => !x.resolved).length;
+      return `<li style="list-style:none"><a class="tile" href="#/${area}/${p.id}/gallery/${g.id}"><div class="frame">${media(g, g.title)}${n ? `<span class="tag alert pinbadge">${n} open</span>` : ""}</div><div class="cap"><span><strong style="font-weight:560">${esc(g.title)}</strong></span><span class="muted small">${fmt(g.date)}</span></div></a></li>`;
+    }).join("");
+    return `<section class="panel"><p class="muted" style="margin-bottom:24px">Open an image and click the exact spot you want to comment on.</p>
+      <ul class="gallery" style="padding:0;margin:0">${tiles || '<li class="empty" style="list-style:none">No images yet.</li>'}</ul>
+      ${staff ? `<form class="inline-form" data-form="add-img" data-p="${p.id}" style="margin-top:48px"><h3 style="font-size:1.1rem">Add an image</h3><p class="hint">${B.demo ? "The preview creates a sample image. The real site uploads your files." : "Choose a picture (JPG, PNG or WebP). Without a file, a placeholder drawing is shown."}</p>
+        <div class="form-row"><div class="field" style="margin:0"><label for="ai-t">Title</label><input id="ai-t" name="title" required></div><div class="field" style="margin:0"><label for="ai-k">Type</label><select id="ai-k" name="kind"><option value="elevation">Elevation</option><option value="plan">Plan</option><option value="render">Render</option><option value="photo">Site photo</option></select></div></div>
+        ${B.demo ? "" : '<div class="field" style="margin:0"><label for="ai-f">Image file</label><input id="ai-f" name="file" type="file" accept="image/*"></div>'}
+        <div><button class="btn sm" type="submit">Add image</button></div></form>` : ""}</section>`;
+  }
+  function viewer(area, p, g) {
+    const me = user();
+    const pins = g.pins.map((x, i) => `<button class="pin${x.resolved ? " resolved" : ""}${ui.activePin === x.id ? " active" : ""}" style="left:${x.x}%;top:${x.y}%" data-act="pin-select" data-id="${x.id}" aria-label="Comment ${i + 1}${x.resolved ? ", resolved" : ""}">${i + 1}</button>`).join("");
+    const draft = ui.draft && ui.draft.gid === g.id ? `<span class="pin draft" style="left:${ui.draft.x}%;top:${ui.draft.y}%" aria-hidden="true">+</span>` : "";
+    const thread = g.pins.map((x, i) => `<li class="${x.resolved ? "resolved " : ""}${ui.activePin === x.id ? "focus" : ""}" id="t-${x.id}"><span class="n">${i + 1}</span><div>
+        <p><strong>${esc(x.author)}</strong> <span class="muted small">${fmt(x.at)}${x.resolved ? ", resolved" : ""}</span></p><p>${esc(x.text)}</p>
+        ${(x.replies || []).map((r) => `<p class="quote" style="margin-top:8px"><strong>${esc(r.author)}</strong>: ${esc(r.text)}</p>`).join("")}
+        <form class="toolbar" data-form="pin-reply" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}" style="margin-top:10px"><label class="small" for="r-${x.id}" style="position:absolute;left:-999px">Reply to comment ${i + 1}</label><input id="r-${x.id}" name="text" placeholder="Reply" style="flex:1;min-width:120px" required><button class="btn ghost sm" type="submit">Reply</button>${B.demo || isStaff() ? `<button class="btn ghost sm" type="button" data-act="pin-resolve" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}">${x.resolved ? "Reopen" : "Mark resolved"}</button>` : ""}</form></div></li>`).join("");
+    const form = ui.draft && ui.draft.gid === g.id
+      ? `<form class="reply" data-form="pin-add" data-p="${p.id}" data-g="${g.id}" style="margin-bottom:24px"><div class="field" style="margin:0"><label for="np">Your comment</label><textarea id="np" name="text" required autofocus></textarea></div><div class="actions"><button class="btn sm" type="submit">Post comment</button><button class="btn ghost sm" type="button" data-act="pin-cancel">Cancel</button></div></form>`
+      : `<p class="muted" style="margin-bottom:24px">Click the image to place a comment.</p>`;
+    return `<section class="panel"><p class="small" style="margin-bottom:12px"><a href="#/${area}/${p.id}/gallery">All images</a></p><h2 style="font-size:var(--step-1);margin-bottom:20px">${esc(g.title)}</h2>
+      <div class="viewer"><div><div class="stage" data-stage="${g.id}">${media(g, g.title)}${pins}${draft}</div>
+      <div class="toolbar" style="margin-top:12px"><button class="btn ghost sm" data-act="pin-centre" data-g="${g.id}">Add a comment without clicking</button><span class="hint">${esc(g.kind === "photo" ? "Site photo" : g.kind[0].toUpperCase() + g.kind.slice(1))}, ${fmt(g.date)}</span></div></div>
+      <div>${form}<ul class="thread">${thread || ""}</ul>${thread ? "" : '<p class="empty" style="margin-top:0">No comments yet.</p>'}</div></div></section>`;
+  }
+
+  function documentsTab(area, p) {
+    const staff = area === "admin";
+    return `<section class="panel"><div class="docs">${p.documents.map((d) => `<div class="doc"><div><strong style="font-weight:560">${esc(d.name)}</strong><div class="meta muted small">Version ${esc(d.version)}, ${esc(d.size)}, added ${fmt(d.date)}</div></div><span class="type">${esc(d.type)}</span><button class="btn ghost sm" data-act="download" data-p="${p.id}" data-id="${d.id}" data-name="${esc(d.name)}">Download</button></div>`).join("") || '<p class="empty">No documents yet.</p>'}</div>
+      ${staff ? `<form class="inline-form" data-form="add-doc" data-p="${p.id}" style="margin-top:40px"><h3 style="font-size:1.1rem">Add a document</h3><p class="hint">${B.demo ? "The preview records the name only. The real site stores the file securely." : "The file is stored privately. Only the studio and this project's clients can open it."}</p>
+        <div class="field" style="margin:0"><label for="ad-n">Document name</label><input id="ad-n" name="name" required></div>
+        <div class="form-row"><div class="field" style="margin:0"><label for="ad-t">File type</label><select id="ad-t" name="type"><option>PDF</option><option>DWG</option><option>IFC</option><option>XLSX</option><option>DOCX</option></select></div><div class="field" style="margin:0"><label for="ad-v">Version</label><input id="ad-v" name="version" value="v1"></div></div>
+        ${B.demo ? "" : '<div class="field" style="margin:0"><label for="ad-f">File</label><input id="ad-f" name="file" type="file"></div>'}
+        <div><button class="btn sm" type="submit">Add document</button></div></form>` : ""}</section>`;
+  }
+
+  function messagesTab(area, p) {
+    const me = user();
+    const bubbles = p.messages.map((m) => m.role === "system"
+      ? `<p class="muted small" style="justify-self:center;text-align:center">${esc(m.text)} ${fmtTime(m.at)}</p>`
+      : `<div class="bubble${m.mine || m.from === me.name ? " me" : ""}"><span class="who">${esc(m.from)}, ${fmtTime(m.at)}</span>${esc(m.text)}</div>`).join("");
+    return `<section class="panel"><div class="chat">${bubbles || '<p class="empty">No messages yet. Write the first one below.</p>'}</div>
+      <form class="reply" data-form="message" data-p="${p.id}"><div class="field" style="margin:0"><label for="msg">Message to ${area === "admin" ? esc(clientOf(p).name) : "the studio"}</label><textarea id="msg" name="text" required></textarea></div><div><button class="btn" type="submit">Send message</button></div></form></section>`;
+  }
+
+  /* ---------- actions ---------- */
+  const errText = (e) => (e && e.message ? e.message : "Something went wrong. Please try again.");
+  /* Run a change, then redraw. Any failure is shown to the person instead of being lost. */
+  async function run(fn, okMsg) {
+    try { await fn(); } catch (e) { toast(errText(e)); render(true); return false; }
+    ui.busy = false; render(true); if (okMsg) toast(okMsg); return true;
+  }
+  const landing = (u) => (u.role === "staff" ? "/admin" : "/portal");
+
+  async function act(name, el) {
+    if (name === "menu") { const n = $("#nav"); const o = n.classList.toggle("open"); el.setAttribute("aria-expanded", o); return; }
+    if (name === "login") { await B.signInAs(el.dataset.id); afterSignIn(); return; }
+    if (name === "logout") { try { await B.signOut(); } catch (e) {} ui = {}; go("/"); render(); toast("Signed out."); return; }
+    if (name === "reset") { if (confirm("Reset all sample data to the starting state?")) { await B.reset(); ui = {}; render(); toast("Sample data reset."); } return; }
+    if (name === "download") {
+      const d = (proj(el.dataset.p) || { documents: [] }).documents.find((x) => x.id === el.dataset.id);
+      if (B.demo || !d) { toast("Preview only. The real site downloads " + el.dataset.name + "."); return; }
+      try { const url = await B.docUrl(d); if (url) window.open(url, "_blank", "noopener"); else toast("This entry has no file attached."); } catch (e) { toast(errText(e)); }
+      return;
+    }
+    if (name === "open-changes") { ui.changesFor = el.dataset.m; render(true); return; }
+    if (name === "cancel-changes") { ui.changesFor = null; render(true); return; }
+    if (name === "approve") { await run(() => B.approve(el.dataset.p, el.dataset.m), "Approved. The studio has been told."); return; }
+    if (name === "pin-select") { ui.activePin = el.dataset.id; render(true); const t = document.getElementById("t-" + el.dataset.id); if (t) t.scrollIntoView({ block: "nearest" }); return; }
+    if (name === "pin-cancel") { ui.draft = null; render(true); return; }
+    if (name === "pin-centre") { ui.draft = { gid: el.dataset.g, x: 50, y: 50 }; render(true); const ta = $("#np"); if (ta) ta.focus(); return; }
+    if (name === "pin-resolve") { await run(() => B.toggleResolve(el.dataset.p, el.dataset.g, el.dataset.id)); return; }
+  }
+  function afterSignIn() {
+    const u = user(); ui.loginError = null;
+    const next = ui.next; ui.next = null;
+    const to = next ? next.slice(1) : landing(u);
+    if (location.hash === "#" + to) render(); else go(to);
+  }
+
+  async function form(name, f, d) {
+    const u = user(), v = (k) => String(d.get(k) || "").trim(), pid = f.dataset.p;
+    if (name === "login") {
+      const btn = f.querySelector("button[type=submit]"); if (btn) btn.disabled = true;
+      try { await B.signIn(v("email"), String(d.get("password") || "")); }
+      catch (e) { ui.loginError = errText(e); render(true); return; }
+      afterSignIn(); return;
+    }
+    if (name === "contact") {
+      if (!v("name") || !v("email") || !v("message")) { $("#c-err").innerHTML = '<p class="error" role="alert">Fill in your name, email and message.</p>'; return; }
+      try { await B.sendContact({ name: v("name"), email: v("email"), type: v("type"), message: v("message") }); }
+      catch (e) { $("#c-err").innerHTML = '<p class="error" role="alert">We could not send your message. Please email us instead.</p>'; return; }
+      f.reset(); $("#c-err").innerHTML = ""; toast("Message sent. We'll reply within two working days."); return;
+    }
+    if (!u) return;
+    if (name === "changes") { ui.changesFor = null; await run(() => B.requestChanges(pid, f.dataset.m, v("text")), "Sent. The studio will review your changes."); return; }
+    if (name === "pin-add") { const dr = ui.draft; ui.draft = null; await run(() => B.addPin(pid, f.dataset.g, dr.x, dr.y, v("text")), "Comment added."); return; }
+    if (name === "pin-reply") { await run(() => B.replyPin(pid, f.dataset.g, f.dataset.id, v("text"))); return; }
+    if (name === "message") { await run(() => B.sendMessage(pid, v("text")), "Message sent."); return; }
+    if (u.role !== "staff") return;
+    if (name === "phase") { await run(() => B.setPhase(pid, +v("phase"), v("revision")), "Progress updated."); return; }
+    if (name === "ms-status") { await run(() => B.setMilestoneStatus(pid, f.dataset.m, v("status")), "Milestone updated."); return; }
+    if (name === "add-ms") { await run(() => B.addMilestone(pid, { phase: +v("phase"), title: v("title"), due: v("due"), note: v("note") }), "Milestone added."); return; }
+    if (name === "add-img") {
+      const file = d.get("file"); const g = { title: v("title"), kind: v("kind"), file: file && file.size ? file : null };
+      if (g.file && g.file.size > 15 * 1024 * 1024) { toast("That image is larger than 15 MB."); return; }
+      await run(() => B.addImage(pid, g), "Image added."); return;
+    }
+    if (name === "add-doc") {
+      const file = d.get("file"); const doc = { name: v("name"), type: v("type"), version: v("version"), file: file && file.size ? file : null };
+      if (doc.file && doc.file.size > 40 * 1024 * 1024) { toast("That file is larger than 40 MB."); return; }
+      await run(() => B.addDoc(pid, doc), "Document added."); return;
+    }
+    if (name === "add-project") {
+      let id = null;
+      const ok = await run(async () => { id = await B.addProject({ name: v("name"), place: v("place"), type: v("type"), client: v("client") || null, summary: v("summary") }); }, "Project added.");
+      if (ok && id) go("/admin/" + id);
+      return;
+    }
+  }
+
+  /* ---------- router ---------- */
+  let lastHash = null;
+  function render(keepScroll) {
+    const parts = location.hash.slice(1).split("?")[0].split("/").filter(Boolean).map(decodeURIComponent);
+    const [a, b, c, d] = parts;
+    let page;
+    if (!a) page = home();
+    else if (a === "projects") page = b ? projectPage(b) : projectsPage();
+    else if (a === "studio") page = studioPage();
+    else if (a === "contact") page = contactPage();
+    else if (a === "login") { if (user()) { go(user().role === "staff" ? "/admin" : "/portal"); return; } page = loginPage(); }
+    else if (a === "portal" || a === "admin") page = portalRoute(a, b, c, d);
+    else page = notFound();
+    if (!page.html) return;
+    document.body.classList.toggle("has-tabbar", !!page.tabbar);
+    const y = window.scrollY;
+    document.title = page.title + " | " + S.studio.name;
+    $("#head").innerHTML = headHTML(page.area || a);
+    $("#app").innerHTML = page.html;
+    $("#foot").innerHTML = footHTML();
+    const changed = lastHash !== location.hash;
+    lastHash = location.hash;
+    document.body.classList.toggle("tabbed", !!page.tabbed);
+    const appEl = $("#app"); appEl.classList.remove("enter");
+    if (changed) { void appEl.offsetWidth; appEl.classList.add("enter"); }
+    if (changed || keepScroll !== true) { window.scrollTo(0, 0); if (changed && !window.__first) $("#app").focus({ preventScroll: true }); }
+    else window.scrollTo(0, y);
+    window.__first = false;
+  }
+  window.__first = true;
+
+  const onClick = (e) => {
+    const t = e.target.closest("[data-act]");
+    if (t) { act(t.dataset.act, t); return; }
+    const stage = e.target.closest("[data-stage]");
+    if (stage) {
+      const r = stage.getBoundingClientRect();
+      ui.draft = { gid: stage.dataset.stage, x: Math.max(1, Math.min(99, ((e.clientX - r.left) / r.width) * 100)), y: Math.max(1, Math.min(99, ((e.clientY - r.top) / r.height) * 100)) };
+      ui.activePin = null; render(true); const ta = $("#np"); if (ta) ta.focus();
+    }
+  };
+  const onSubmit = (e) => {
+    const f = e.target.closest("form[data-form]");
+    if (!f) return;
+    e.preventDefault();
+    if (!f.checkValidity()) { f.reportValidity(); return; }
+    form(f.dataset.form, f, new FormData(f));
+  };
+  const needsData = () => /^#\/(portal|admin)(\/|$)/.test(location.hash);
+
+  /* boot.js calls this once the backend is ready. */
+  window.TRIARCH_START = async function (backend) {
+    B = backend || makeLocal();
+    try { await B.init(); } catch (e) { ui.fatal = errText(e); }
+    B.onChange = () => render(true);
+    document.addEventListener("click", onClick);
+    document.addEventListener("submit", onSubmit);
+    window.addEventListener("hashchange", async () => {
+      if (!B.demo && needsData() && user()) { try { await B.refresh(); } catch (e) { toast(errText(e)); } }
+      render();
+    });
+    render();
+    if (ui.fatal) toast("The site could not reach its database. " + ui.fatal);
+  };
+})();
+
+</script>
+  <script type="module">
+/* Chooses the backend, then starts the app. */
+(async function () {
+  const cfg = window.CONFIG || {};
+  let backend = null;
+  if (cfg.supabaseUrl && cfg.supabaseKey) {
+    try {
+      const [{ createClient }, { makeSupa }] = await Promise.all([
+        import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm"),
+        import("./supa.js"),
+      ]);
+      backend = makeSupa(createClient(cfg.supabaseUrl, cfg.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true } }));
+    } catch (e) {
+      console.error("Could not load the database connection", e);
+    }
+  }
+  window.TRIARCH_START(backend);
+})();
+
+</script>
+</body>
+</html>

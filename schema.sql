@@ -187,3 +187,30 @@ create policy files_staff_update on storage.objects for update to authenticated
   using (bucket_id = 'project-files' and is_staff());
 create policy files_staff_delete on storage.objects for delete to authenticated
   using (bucket_id = 'project-files' and is_staff());
+
+-- ---------- second step: what the screens need ----------
+alter table projects add column seed int not null default (floor(random() * 900) + 10);           -- picks the placeholder drawing
+alter table gallery_items add column seed int not null default (floor(random() * 900) + 10);
+alter table gallery_items alter column storage_path drop not null;                                 -- no file yet = placeholder drawing
+alter table documents alter column storage_path drop not null;
+
+-- Clients may see the names of studio staff and of people on their own projects (for comments and messages).
+create function shares_project(uid uuid) returns boolean language sql stable security definer set search_path = public as
+$$ select exists (select 1 from project_members a join project_members b on a.project_id = b.project_id
+                  where a.user_id = (select auth.uid()) and b.user_id = uid) $$;
+revoke execute on function shares_project(uuid) from public, anon;
+create policy colleagues_read on profiles for select to authenticated using (role = 'staff' or shares_project(id));
+
+-- Messages from the public contact form. Anyone may send one; only staff can read them.
+create table contact_requests (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(name) between 1 and 200),
+  email text not null check (char_length(email) between 3 and 320),
+  kind text check (char_length(kind) <= 100),
+  message text not null check (char_length(message) between 1 and 4000),
+  created_at timestamptz not null default now()
+);
+alter table contact_requests enable row level security;
+create policy anyone_can_send on contact_requests for insert to anon, authenticated with check (true);
+create policy staff_read on contact_requests for select to authenticated using (is_staff());
+create policy staff_delete on contact_requests for delete to authenticated using (is_staff());

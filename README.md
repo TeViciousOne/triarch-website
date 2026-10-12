@@ -6,7 +6,10 @@ Style: an iOS-inspired look with a frosted-glass top bar, rounded cards, pill bu
 
 The studio name (triArch, written exactly like this) and the slogan (Three points. One vision.) are both set in one place, at the top of `data.js`. Change them there and they update everywhere. The slogan is the main line on the home page and sits small under the triArch wordmark in the top bar.
 
-## How to open it
+## Two modes
+With `supabaseKey` empty in `config.js` the site runs as an offline demo with sample data (this is what `triarch-preview.html` is). With the key filled in, as it is in the repository, it uses the real database: real logins, shared data, private file storage. See `SETUP.md` for creating accounts.
+
+## How to open the offline demo
 Double-click **triarch-preview.html**. It opens in your browser and needs no installation. With an internet connection it uses the font Inter on non-Apple devices; Apple devices use their own system font (SF Pro). It works on phones and computers.
 
 ## What you can try
@@ -39,4 +42,6 @@ Not yet real: secure logins with real passwords, real file uploads, email notifi
 ## Files
 - `triarch-preview.html`: the whole preview in one file
 - `index.html`, `styles.css`, `app.js`, `data.js`, `drawings.js`: the same preview as separate source files
-- `schema.sql`: the database design for the full version
+- `config.js`, `boot.js`, `supa.js`: connect the same screens to Supabase
+- `schema.sql`: the database design (already applied to the Supabase project)
+- `SETUP.md`: how to create the first studio account and add clients

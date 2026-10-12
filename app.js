@@ -1,6 +1,7 @@
-/* triArch: website and client portal preview.
-   Plain JavaScript with no dependencies. Data is kept in this browser's localStorage so you can click through every flow.
-   In the real build, the same screens read and write a Supabase database instead. */
+/* triArch: website and client portal.
+   Plain JavaScript with no dependencies. It runs against one of two backends:
+   - the demo backend below (sample data kept in this browser, used when no database is configured), or
+   - the Supabase backend in supa.js (real logins and shared data), chosen in config.js. */
 (function () {
   const S = window.SEED;
   const $ = (s, el) => (el || document).querySelector(s);
@@ -11,23 +12,62 @@
   const fmt = (d) => (d ? new Date(String(d).slice(0, 10) + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
   const fmtTime = (d) => (String(d).length > 10 ? fmt(d) + ", " + String(d).slice(11, 16) : fmt(d));
 
-  /* ---------- state ---------- */
+  /* ---------- demo backend: sample data kept in this browser ---------- */
   const KEY = "triarch_preview_v1";
-  const fresh = () => ({ v: 1, session: null, projects: clone(S.projects) });
-  function load() {
-    try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) return s; } catch (e) {}
-    return fresh();
+  function makeLocal() {
+    const fresh = () => ({ v: 1, session: null, projects: clone(S.projects) });
+    const load = () => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) return s; } catch (e) {} return fresh(); };
+    let state = load();
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+    const cur = () => S.users.find((u) => u.id === state.session) || null;
+    const proj = (id) => state.projects.find((p) => p.id === id);
+    const touch = (p) => { p.lastUpdate = today(); };
+    const note = (p, text) => p.messages.push({ id: uid(), from: "System", role: "system", text, at: new Date().toISOString().slice(0, 16) });
+    const nowStamp = () => new Date().toISOString().slice(0, 16);
+    const find = (pid, mid) => proj(pid).milestones.find((x) => x.id === mid);
+    const pinOf = (pid, gid, id) => proj(pid).gallery.find((x) => x.id === gid).pins.find((q) => q.id === id);
+    const B = {
+      demo: true,
+      onChange: null,
+      async init() { window.addEventListener("storage", (e) => { if (e.key === KEY) { state = load(); if (B.onChange) B.onChange(); } }); },
+      async refresh() {},
+      user: cur,
+      projects: () => state.projects.map((p) => { p.clientName = (S.users.find((u) => u.id === p.client) || {}).name || ""; return p; }),
+      clients: () => S.users.filter((u) => u.role === "client").map((u) => ({ id: u.id, name: u.name })),
+      demoUsers: () => S.users,
+      async signIn(email, password) {
+        const found = S.users.find((x) => x.email.toLowerCase() === String(email).toLowerCase());
+        if (!found || password !== "preview") throw new Error("That email and password don't match. In this preview the password is “preview”, or use one of the accounts below.");
+        state.session = found.id; save();
+      },
+      async signInAs(id) { state.session = id; save(); },
+      async signOut() { state.session = null; save(); },
+      async reset() { const u = cur(); state = fresh(); state.session = u && u.id; save(); },
+      async approve(pid, mid) { const u = cur(), P = proj(pid), m = find(pid, mid); m.status = "done"; m.response = { decision: "approved", text: "", by: u.name, at: today() }; note(P, `${u.name} approved “${m.title}”.`); touch(P); save(); },
+      async requestChanges(pid, mid, text) { const u = cur(), P = proj(pid), m = find(pid, mid); m.status = "changes"; m.response = { decision: "changes", text, by: u.name, at: today() }; note(P, `${u.name} asked for changes to “${m.title}”.`); touch(P); save(); },
+      async addPin(pid, gid, x, y, text) { const u = cur(), P = proj(pid); P.gallery.find((g) => g.id === gid).pins.push({ id: uid(), x: Math.round(x), y: Math.round(y), text, author: u.name, role: u.role, at: today(), resolved: false, replies: [] }); touch(P); save(); },
+      async replyPin(pid, gid, id, text) { const u = cur(), x = pinOf(pid, gid, id); (x.replies = x.replies || []).push({ author: u.name, role: u.role, text, at: today() }); touch(proj(pid)); save(); },
+      async toggleResolve(pid, gid, id) { const x = pinOf(pid, gid, id); x.resolved = !x.resolved; touch(proj(pid)); save(); },
+      async sendMessage(pid, text) { const u = cur(), P = proj(pid); P.messages.push({ id: uid(), from: u.name, role: u.role, text, at: nowStamp(), mine: true }); touch(P); save(); },
+      async sendContact() {},
+      async setPhase(pid, phase, revision) { const P = proj(pid); P.phaseIndex = phase; P.revision = revision || P.revision; touch(P); save(); },
+      async setMilestoneStatus(pid, mid, status) { const P = proj(pid), m = find(pid, mid); m.status = status; if (status === "awaiting") note(P, `The studio asked for your feedback on “${m.title}”.`); touch(P); save(); },
+      async addMilestone(pid, m) { const P = proj(pid); P.milestones.push({ id: uid(), phase: m.phase, title: m.title, due: m.due, status: "upcoming", note: m.note, response: null }); touch(P); save(); },
+      async addImage(pid, g) { const P = proj(pid); P.gallery.unshift({ id: uid(), title: g.title, kind: g.kind, seed: 100 + Math.floor(Math.random() * 900), date: today(), pins: [] }); touch(P); note(P, `The studio added “${g.title}” to the gallery.`); save(); },
+      async addDoc(pid, d) { const P = proj(pid); P.documents.unshift({ id: uid(), name: d.name, type: d.type, size: "n/a", date: today(), version: d.version || "v1" }); touch(P); note(P, `The studio added the document “${d.name}”.`); save(); },
+      async docUrl() { return null; },
+      async addProject(f) { const id = uid(); state.projects.unshift({ id, name: f.name, client: f.client, place: f.place, type: f.type, revision: "A", phaseIndex: 0, lastUpdate: today(), seed: 100 + Math.floor(Math.random() * 900), summary: f.summary, milestones: [], gallery: [], documents: [], messages: [] }); save(); return id; },
+    };
+    return B;
   }
-  let state = load();
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+  let B = null; /* the backend in use */
   let ui = {}; /* transient interface state: open forms, pin being placed */
 
-  const user = () => S.users.find((u) => u.id === state.session) || null;
+  const user = () => B.user();
   const isStaff = () => { const u = user(); return !!u && u.role === "staff"; };
-  const proj = (id) => state.projects.find((p) => p.id === id);
-  const clientOf = (p) => S.users.find((u) => u.id === p.client);
-  const touch = (p) => { p.lastUpdate = today(); };
-  const note = (p, text) => p.messages.push({ id: uid(), from: "System", role: "system", text, at: new Date().toISOString().slice(0, 16) });
+  const proj = (id) => B.projects().find((p) => p.id === id);
+  const clientOf = (p) => ({ name: p.clientName || "" });
 
   function progress(p) {
     const n = S.phases.length;
@@ -65,7 +105,7 @@
     return `<div class="wrap">
       <div class="col"><strong>${esc(S.studio.name)}</strong><span class="muted">${esc(S.studio.address)}</span></div>
       <div class="col"><a class="link" href="mailto:${esc(S.studio.email)}">${esc(S.studio.email)}</a><span class="muted">${esc(S.studio.phone)}</span></div>
-      <div class="col"><a class="link" href="#/login">Client login</a><a class="link" href="#/projects">Projects</a><span class="muted">Preview with sample data</span></div></div>`;
+      <div class="col"><a class="link" href="#/login">Client login</a><a class="link" href="#/projects">Projects</a>${B.demo ? '<span class="muted">Preview with sample data</span>' : ""}</div></div>`;
   }
 
   /* ---------- public pages ---------- */
@@ -182,7 +222,7 @@
 
   /* ---------- login ---------- */
   function loginPage() {
-    const demos = S.users.map((u) => `<button class="demo" data-act="login" data-id="${u.id}"><span>${esc(u.name)}</span><span class="muted small">${u.role === "staff" ? "Studio staff" : "Client"}</span></button>`).join("");
+    const demos = B.demo ? B.demoUsers().map((u) => `<button class="demo" data-act="login" data-id="${u.id}"><span>${esc(u.name)}</span><span class="muted small">${u.role === "staff" ? "Studio staff" : "Client"}</span></button>`).join("") : "";
     return { title: "Client login", area: "login", html: `
       <div class="wrap"><div class="auth">
         <h1>Client login</h1>
@@ -193,9 +233,9 @@
           <div class="field"><label for="l-pass">Password</label><input id="l-pass" name="password" type="password" autocomplete="current-password" required></div>
           <button class="btn" type="submit" style="width:100%">Sign in</button>
         </form>
-        <h2 style="font-size:var(--step-1);margin:40px 0 4px">Try the preview</h2>
+        ${B.demo ? `<h2 style="font-size:var(--step-1);margin:40px 0 4px">Try the preview</h2>
         <p class="hint" style="margin-bottom:12px">This preview has no real accounts. Pick one to sign in.</p>
-        <div class="demo-list group">${demos}</div>
+        <div class="demo-list group">${demos}</div>` : `<p class="hint" style="margin-top:20px">Accounts are created by the studio. If you cannot sign in, <a class="link" href="#/contact">contact us</a>.</p>`}
       </div></div>` };
   }
 
@@ -223,12 +263,12 @@
   }
   function clientHome() {
     const u = user();
-    const list = state.projects.filter((p) => u.projects.includes(p.id));
+    const list = B.projects().filter((p) => u.projects.includes(p.id));
     return { title: "Your projects", area: "portal", html: `<div class="wrap portal-head"><h1 class="large-title">Your projects</h1><p class="muted" style="margin:8px 0 28px">Signed in as ${esc(u.name)}</p>
       <div class="plist">${list.map((p) => projectRow("portal", p)).join("") || '<p class="empty">No projects yet.</p>'}</div></div>` };
   }
   function adminHome() {
-    const list = state.projects;
+    const list = B.projects();
     const todo = [];
     list.forEach((p) => {
       changes(p).forEach((m) => todo.push({ p, tab: "overview", text: `${clientOf(p).name} asked for changes: ${m.title}` }));
@@ -237,12 +277,27 @@
     });
     const stat = (n, l) => `<div><strong>${n}</strong><span class="muted small">${l}</span></div>`;
     return { title: "Admin", area: "portal", html: `<div class="wrap portal-head">
-      <div class="section-head"><h1 class="large-title">Studio admin</h1><button class="btn ghost sm" data-act="reset">Reset sample data</button></div>
+      <div class="section-head"><h1 class="large-title">Studio admin</h1>${B.demo ? '<button class="btn ghost sm" data-act="reset">Reset sample data</button>' : ""}</div>
       <div class="stats">${stat(list.length, "active projects")}${stat(list.reduce((n, p) => n + awaiting(p).length, 0), "waiting for clients")}${stat(list.reduce((n, p) => n + changes(p).length, 0), "change requests")}${stat(list.reduce((n, p) => n + openPins(p), 0), "open drawing comments")}</div>
       <h2 style="font-size:var(--step-1);margin-bottom:14px">Needs attention</h2>
       <div class="rows" style="margin-bottom:48px">${todo.map((t) => `<div><a class="k" href="#/admin/${t.p.id}/${t.tab}">${esc(t.p.name)}</a><span class="${t.quiet ? "muted" : ""}">${esc(t.text)}</span></div>`).join("") || '<p class="empty">Nothing needs attention.</p>'}</div>
-      <h2 style="font-size:var(--step-1);margin-bottom:14px">All projects</h2><div class="plist">${list.map((p) => projectRow("admin", p)).join("")}</div></div>` };
+      <h2 style="font-size:var(--step-1);margin-bottom:14px">All projects</h2><div class="plist">${list.map((p) => projectRow("admin", p)).join("") || '<p class="empty">No projects yet. Add the first one below.</p>'}</div>
+      ${newProjectForm()}</div>` };
   }
+
+  function newProjectForm() {
+    const cl = B.clients();
+    return `<form class="inline-form" data-form="add-project" style="margin-top:48px"><h3 style="font-size:1.1rem">Add a project</h3>
+      <div class="field" style="margin:0"><label for="np-n">Project name</label><input id="np-n" name="name" required></div>
+      <div class="form-row"><div class="field" style="margin:0"><label for="np-p">Location</label><input id="np-p" name="place"></div>
+      <div class="field" style="margin:0"><label for="np-t">Type</label><input id="np-t" name="type" placeholder="Private house"></div></div>
+      <div class="field" style="margin:0"><label for="np-c">Client</label><select id="np-c" name="client"><option value="">No client yet</option>${cl.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select></div>
+      ${B.demo ? "" : '<p class="hint">Clients appear here after you create their account (see the setup notes).</p>'}
+      <div class="field" style="margin:0"><label for="np-s">Short description</label><input id="np-s" name="summary"></div>
+      <div><button class="btn sm" type="submit">Add project</button></div></form>`;
+  }
+  /* An uploaded image if there is one, otherwise the generated placeholder drawing. */
+  const media = (g, label) => (g.url ? `<img class="upload" src="${esc(g.url)}" alt="${esc(label)}" loading="lazy" draggable="false">` : drawing(g.kind, g.seed, { label }));
 
   function shell(area, p, tab, inner) {
     const staff = area === "admin";
@@ -330,12 +385,13 @@
     }
     const tiles = p.gallery.map((g) => {
       const n = g.pins.filter((x) => !x.resolved).length;
-      return `<li style="list-style:none"><a class="tile" href="#/${area}/${p.id}/gallery/${g.id}"><div class="frame">${drawing(g.kind, g.seed, { label: g.title })}${n ? `<span class="tag alert pinbadge">${n} open</span>` : ""}</div><div class="cap"><span><strong style="font-weight:560">${esc(g.title)}</strong></span><span class="muted small">${fmt(g.date)}</span></div></a></li>`;
+      return `<li style="list-style:none"><a class="tile" href="#/${area}/${p.id}/gallery/${g.id}"><div class="frame">${media(g, g.title)}${n ? `<span class="tag alert pinbadge">${n} open</span>` : ""}</div><div class="cap"><span><strong style="font-weight:560">${esc(g.title)}</strong></span><span class="muted small">${fmt(g.date)}</span></div></a></li>`;
     }).join("");
     return `<section class="panel"><p class="muted" style="margin-bottom:24px">Open an image and click the exact spot you want to comment on.</p>
       <ul class="gallery" style="padding:0;margin:0">${tiles || '<li class="empty" style="list-style:none">No images yet.</li>'}</ul>
-      ${staff ? `<form class="inline-form" data-form="add-img" data-p="${p.id}" style="margin-top:48px"><h3 style="font-size:1.1rem">Add an image</h3><p class="hint">The preview creates a sample image. The real site uploads your files.</p>
+      ${staff ? `<form class="inline-form" data-form="add-img" data-p="${p.id}" style="margin-top:48px"><h3 style="font-size:1.1rem">Add an image</h3><p class="hint">${B.demo ? "The preview creates a sample image. The real site uploads your files." : "Choose a picture (JPG, PNG or WebP). Without a file, a placeholder drawing is shown."}</p>
         <div class="form-row"><div class="field" style="margin:0"><label for="ai-t">Title</label><input id="ai-t" name="title" required></div><div class="field" style="margin:0"><label for="ai-k">Type</label><select id="ai-k" name="kind"><option value="elevation">Elevation</option><option value="plan">Plan</option><option value="render">Render</option><option value="photo">Site photo</option></select></div></div>
+        ${B.demo ? "" : '<div class="field" style="margin:0"><label for="ai-f">Image file</label><input id="ai-f" name="file" type="file" accept="image/*"></div>'}
         <div><button class="btn sm" type="submit">Add image</button></div></form>` : ""}</section>`;
   }
   function viewer(area, p, g) {
@@ -345,22 +401,23 @@
     const thread = g.pins.map((x, i) => `<li class="${x.resolved ? "resolved " : ""}${ui.activePin === x.id ? "focus" : ""}" id="t-${x.id}"><span class="n">${i + 1}</span><div>
         <p><strong>${esc(x.author)}</strong> <span class="muted small">${fmt(x.at)}${x.resolved ? ", resolved" : ""}</span></p><p>${esc(x.text)}</p>
         ${(x.replies || []).map((r) => `<p class="quote" style="margin-top:8px"><strong>${esc(r.author)}</strong>: ${esc(r.text)}</p>`).join("")}
-        <form class="toolbar" data-form="pin-reply" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}" style="margin-top:10px"><label class="small" for="r-${x.id}" style="position:absolute;left:-999px">Reply to comment ${i + 1}</label><input id="r-${x.id}" name="text" placeholder="Reply" style="flex:1;min-width:120px" required><button class="btn ghost sm" type="submit">Reply</button><button class="btn ghost sm" type="button" data-act="pin-resolve" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}">${x.resolved ? "Reopen" : "Mark resolved"}</button></form></div></li>`).join("");
+        <form class="toolbar" data-form="pin-reply" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}" style="margin-top:10px"><label class="small" for="r-${x.id}" style="position:absolute;left:-999px">Reply to comment ${i + 1}</label><input id="r-${x.id}" name="text" placeholder="Reply" style="flex:1;min-width:120px" required><button class="btn ghost sm" type="submit">Reply</button>${B.demo || isStaff() ? `<button class="btn ghost sm" type="button" data-act="pin-resolve" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}">${x.resolved ? "Reopen" : "Mark resolved"}</button>` : ""}</form></div></li>`).join("");
     const form = ui.draft && ui.draft.gid === g.id
       ? `<form class="reply" data-form="pin-add" data-p="${p.id}" data-g="${g.id}" style="margin-bottom:24px"><div class="field" style="margin:0"><label for="np">Your comment</label><textarea id="np" name="text" required autofocus></textarea></div><div class="actions"><button class="btn sm" type="submit">Post comment</button><button class="btn ghost sm" type="button" data-act="pin-cancel">Cancel</button></div></form>`
       : `<p class="muted" style="margin-bottom:24px">Click the image to place a comment.</p>`;
     return `<section class="panel"><p class="small" style="margin-bottom:12px"><a href="#/${area}/${p.id}/gallery">All images</a></p><h2 style="font-size:var(--step-1);margin-bottom:20px">${esc(g.title)}</h2>
-      <div class="viewer"><div><div class="stage" data-stage="${g.id}">${drawing(g.kind, g.seed, { label: g.title })}${pins}${draft}</div>
+      <div class="viewer"><div><div class="stage" data-stage="${g.id}">${media(g, g.title)}${pins}${draft}</div>
       <div class="toolbar" style="margin-top:12px"><button class="btn ghost sm" data-act="pin-centre" data-g="${g.id}">Add a comment without clicking</button><span class="hint">${esc(g.kind === "photo" ? "Site photo" : g.kind[0].toUpperCase() + g.kind.slice(1))}, ${fmt(g.date)}</span></div></div>
       <div>${form}<ul class="thread">${thread || ""}</ul>${thread ? "" : '<p class="empty" style="margin-top:0">No comments yet.</p>'}</div></div></section>`;
   }
 
   function documentsTab(area, p) {
     const staff = area === "admin";
-    return `<section class="panel"><div class="docs">${p.documents.map((d) => `<div class="doc"><div><strong style="font-weight:560">${esc(d.name)}</strong><div class="meta muted small">Version ${esc(d.version)}, ${esc(d.size)}, added ${fmt(d.date)}</div></div><span class="type">${esc(d.type)}</span><button class="btn ghost sm" data-act="download" data-name="${esc(d.name)}">Download</button></div>`).join("") || '<p class="empty">No documents yet.</p>'}</div>
-      ${staff ? `<form class="inline-form" data-form="add-doc" data-p="${p.id}" style="margin-top:40px"><h3 style="font-size:1.1rem">Add a document</h3><p class="hint">The preview records the name only. The real site stores the file securely.</p>
+    return `<section class="panel"><div class="docs">${p.documents.map((d) => `<div class="doc"><div><strong style="font-weight:560">${esc(d.name)}</strong><div class="meta muted small">Version ${esc(d.version)}, ${esc(d.size)}, added ${fmt(d.date)}</div></div><span class="type">${esc(d.type)}</span><button class="btn ghost sm" data-act="download" data-p="${p.id}" data-id="${d.id}" data-name="${esc(d.name)}">Download</button></div>`).join("") || '<p class="empty">No documents yet.</p>'}</div>
+      ${staff ? `<form class="inline-form" data-form="add-doc" data-p="${p.id}" style="margin-top:40px"><h3 style="font-size:1.1rem">Add a document</h3><p class="hint">${B.demo ? "The preview records the name only. The real site stores the file securely." : "The file is stored privately. Only the studio and this project's clients can open it."}</p>
         <div class="field" style="margin:0"><label for="ad-n">Document name</label><input id="ad-n" name="name" required></div>
         <div class="form-row"><div class="field" style="margin:0"><label for="ad-t">File type</label><select id="ad-t" name="type"><option>PDF</option><option>DWG</option><option>IFC</option><option>XLSX</option><option>DOCX</option></select></div><div class="field" style="margin:0"><label for="ad-v">Version</label><input id="ad-v" name="version" value="v1"></div></div>
+        ${B.demo ? "" : '<div class="field" style="margin:0"><label for="ad-f">File</label><input id="ad-f" name="file" type="file"></div>'}
         <div><button class="btn sm" type="submit">Add document</button></div></form>` : ""}</section>`;
   }
 
@@ -368,80 +425,85 @@
     const me = user();
     const bubbles = p.messages.map((m) => m.role === "system"
       ? `<p class="muted small" style="justify-self:center;text-align:center">${esc(m.text)} ${fmtTime(m.at)}</p>`
-      : `<div class="bubble${m.from === me.name ? " me" : ""}"><span class="who">${esc(m.from)}, ${fmtTime(m.at)}</span>${esc(m.text)}</div>`).join("");
+      : `<div class="bubble${m.mine || m.from === me.name ? " me" : ""}"><span class="who">${esc(m.from)}, ${fmtTime(m.at)}</span>${esc(m.text)}</div>`).join("");
     return `<section class="panel"><div class="chat">${bubbles || '<p class="empty">No messages yet. Write the first one below.</p>'}</div>
       <form class="reply" data-form="message" data-p="${p.id}"><div class="field" style="margin:0"><label for="msg">Message to ${area === "admin" ? esc(clientOf(p).name) : "the studio"}</label><textarea id="msg" name="text" required></textarea></div><div><button class="btn" type="submit">Send message</button></div></form></section>`;
   }
 
   /* ---------- actions ---------- */
-  function act(name, el) {
-    const u = user();
-    const P = el.dataset.p && proj(el.dataset.p);
+  const errText = (e) => (e && e.message ? e.message : "Something went wrong. Please try again.");
+  /* Run a change, then redraw. Any failure is shown to the person instead of being lost. */
+  async function run(fn, okMsg) {
+    try { await fn(); } catch (e) { toast(errText(e)); render(true); return false; }
+    ui.busy = false; render(true); if (okMsg) toast(okMsg); return true;
+  }
+  const landing = (u) => (u.role === "staff" ? "/admin" : "/portal");
+
+  async function act(name, el) {
     if (name === "menu") { const n = $("#nav"); const o = n.classList.toggle("open"); el.setAttribute("aria-expanded", o); return; }
-    if (name === "login") { signIn(el.dataset.id); return; }
-    if (name === "logout") { state.session = null; save(); go("/"); toast("Signed out."); return; }
-    if (name === "reset") { if (confirm("Reset all sample data to the starting state?")) { state = fresh(); state.session = u.id; save(); ui = {}; render(); toast("Sample data reset."); } return; }
-    if (name === "download") { toast("Preview only. The real site downloads " + el.dataset.name + "."); return; }
+    if (name === "login") { await B.signInAs(el.dataset.id); afterSignIn(); return; }
+    if (name === "logout") { try { await B.signOut(); } catch (e) {} ui = {}; go("/"); render(); toast("Signed out."); return; }
+    if (name === "reset") { if (confirm("Reset all sample data to the starting state?")) { await B.reset(); ui = {}; render(); toast("Sample data reset."); } return; }
+    if (name === "download") {
+      const d = (proj(el.dataset.p) || { documents: [] }).documents.find((x) => x.id === el.dataset.id);
+      if (B.demo || !d) { toast("Preview only. The real site downloads " + el.dataset.name + "."); return; }
+      try { const url = await B.docUrl(d); if (url) window.open(url, "_blank", "noopener"); else toast("This entry has no file attached."); } catch (e) { toast(errText(e)); }
+      return;
+    }
     if (name === "open-changes") { ui.changesFor = el.dataset.m; render(true); return; }
     if (name === "cancel-changes") { ui.changesFor = null; render(true); return; }
-    if (name === "approve") {
-      const m = P.milestones.find((x) => x.id === el.dataset.m);
-      m.status = "done"; m.response = { decision: "approved", text: "", by: u.name, at: today() };
-      note(P, `${u.name} approved “${m.title}”.`); touch(P); save(); render(true); toast("Approved. The studio has been told."); return;
-    }
+    if (name === "approve") { await run(() => B.approve(el.dataset.p, el.dataset.m), "Approved. The studio has been told."); return; }
     if (name === "pin-select") { ui.activePin = el.dataset.id; render(true); const t = document.getElementById("t-" + el.dataset.id); if (t) t.scrollIntoView({ block: "nearest" }); return; }
     if (name === "pin-cancel") { ui.draft = null; render(true); return; }
     if (name === "pin-centre") { ui.draft = { gid: el.dataset.g, x: 50, y: 50 }; render(true); const ta = $("#np"); if (ta) ta.focus(); return; }
-    if (name === "pin-resolve") {
-      const g = P.gallery.find((x) => x.id === el.dataset.g), x = g.pins.find((q) => q.id === el.dataset.id);
-      x.resolved = !x.resolved; touch(P); save(); render(true); return;
-    }
+    if (name === "pin-resolve") { await run(() => B.toggleResolve(el.dataset.p, el.dataset.g, el.dataset.id)); return; }
   }
-  function signIn(id) {
-    const u = S.users.find((x) => x.id === id);
-    state.session = u.id; ui.loginError = null; save();
+  function afterSignIn() {
+    const u = user(); ui.loginError = null;
     const next = ui.next; ui.next = null;
-    go(next ? next.slice(1) : u.role === "staff" ? "/admin" : "/portal");
+    const to = next ? next.slice(1) : landing(u);
+    if (location.hash === "#" + to) render(); else go(to);
   }
 
-  function form(name, f, d) {
-    const u = user(), P = f.dataset.p && proj(f.dataset.p), v = (k) => String(d.get(k) || "").trim();
+  async function form(name, f, d) {
+    const u = user(), v = (k) => String(d.get(k) || "").trim(), pid = f.dataset.p;
     if (name === "login") {
-      const found = S.users.find((x) => x.email.toLowerCase() === v("email").toLowerCase());
-      if (!found || v("password") !== "preview") { ui.loginError = "That email and password don't match. In this preview the password is “preview”, or use one of the accounts below."; render(true); return; }
-      signIn(found.id); return;
+      const btn = f.querySelector("button[type=submit]"); if (btn) btn.disabled = true;
+      try { await B.signIn(v("email"), String(d.get("password") || "")); }
+      catch (e) { ui.loginError = errText(e); render(true); return; }
+      afterSignIn(); return;
     }
     if (name === "contact") {
       if (!v("name") || !v("email") || !v("message")) { $("#c-err").innerHTML = '<p class="error" role="alert">Fill in your name, email and message.</p>'; return; }
+      try { await B.sendContact({ name: v("name"), email: v("email"), type: v("type"), message: v("message") }); }
+      catch (e) { $("#c-err").innerHTML = '<p class="error" role="alert">We could not send your message. Please email us instead.</p>'; return; }
       f.reset(); $("#c-err").innerHTML = ""; toast("Message sent. We'll reply within two working days."); return;
     }
-    if (name === "changes") {
-      const m = P.milestones.find((x) => x.id === f.dataset.m);
-      m.status = "changes"; m.response = { decision: "changes", text: v("text"), by: u.name, at: today() };
-      note(P, `${u.name} asked for changes to “${m.title}”.`); ui.changesFor = null; touch(P); save(); render(true); toast("Sent. The studio will review your changes."); return;
-    }
-    if (name === "pin-add") {
-      const g = P.gallery.find((x) => x.id === f.dataset.g);
-      g.pins.push({ id: uid(), x: Math.round(ui.draft.x), y: Math.round(ui.draft.y), text: v("text"), author: u.name, role: u.role, at: today(), resolved: false, replies: [] });
-      ui.draft = null; touch(P); save(); render(true); toast("Comment added."); return;
-    }
-    if (name === "pin-reply") {
-      const g = P.gallery.find((x) => x.id === f.dataset.g), x = g.pins.find((q) => q.id === f.dataset.id);
-      (x.replies = x.replies || []).push({ author: u.name, role: u.role, text: v("text"), at: today() }); touch(P); save(); render(true); return;
-    }
-    if (name === "message") {
-      P.messages.push({ id: uid(), from: u.name, role: u.role, text: v("text"), at: new Date().toISOString().slice(0, 16) }); touch(P); save(); render(true); toast("Message sent."); return;
-    }
+    if (!u) return;
+    if (name === "changes") { ui.changesFor = null; await run(() => B.requestChanges(pid, f.dataset.m, v("text")), "Sent. The studio will review your changes."); return; }
+    if (name === "pin-add") { const dr = ui.draft; ui.draft = null; await run(() => B.addPin(pid, f.dataset.g, dr.x, dr.y, v("text")), "Comment added."); return; }
+    if (name === "pin-reply") { await run(() => B.replyPin(pid, f.dataset.g, f.dataset.id, v("text"))); return; }
+    if (name === "message") { await run(() => B.sendMessage(pid, v("text")), "Message sent."); return; }
     if (u.role !== "staff") return;
-    if (name === "phase") { P.phaseIndex = +v("phase"); P.revision = v("revision") || P.revision; touch(P); save(); render(true); toast("Progress updated."); return; }
-    if (name === "ms-status") {
-      const m = P.milestones.find((x) => x.id === f.dataset.m); m.status = v("status");
-      if (m.status === "awaiting") note(P, `The studio asked for your feedback on “${m.title}”.`);
-      touch(P); save(); render(true); toast("Milestone updated."); return;
+    if (name === "phase") { await run(() => B.setPhase(pid, +v("phase"), v("revision")), "Progress updated."); return; }
+    if (name === "ms-status") { await run(() => B.setMilestoneStatus(pid, f.dataset.m, v("status")), "Milestone updated."); return; }
+    if (name === "add-ms") { await run(() => B.addMilestone(pid, { phase: +v("phase"), title: v("title"), due: v("due"), note: v("note") }), "Milestone added."); return; }
+    if (name === "add-img") {
+      const file = d.get("file"); const g = { title: v("title"), kind: v("kind"), file: file && file.size ? file : null };
+      if (g.file && g.file.size > 15 * 1024 * 1024) { toast("That image is larger than 15 MB."); return; }
+      await run(() => B.addImage(pid, g), "Image added."); return;
     }
-    if (name === "add-ms") { P.milestones.push({ id: uid(), phase: +v("phase"), title: v("title"), due: v("due"), status: "upcoming", note: v("note"), response: null }); touch(P); save(); render(true); toast("Milestone added."); return; }
-    if (name === "add-img") { P.gallery.unshift({ id: uid(), title: v("title"), kind: v("kind"), seed: 100 + Math.floor(Math.random() * 900), date: today(), pins: [] }); touch(P); note(P, `The studio added “${v("title")}” to the gallery.`); save(); render(true); toast("Image added."); return; }
-    if (name === "add-doc") { P.documents.unshift({ id: uid(), name: v("name"), type: v("type"), size: "n/a", date: today(), version: v("version") || "v1" }); touch(P); note(P, `The studio added the document “${v("name")}”.`); save(); render(true); toast("Document added."); return; }
+    if (name === "add-doc") {
+      const file = d.get("file"); const doc = { name: v("name"), type: v("type"), version: v("version"), file: file && file.size ? file : null };
+      if (doc.file && doc.file.size > 40 * 1024 * 1024) { toast("That file is larger than 40 MB."); return; }
+      await run(() => B.addDoc(pid, doc), "Document added."); return;
+    }
+    if (name === "add-project") {
+      let id = null;
+      const ok = await run(async () => { id = await B.addProject({ name: v("name"), place: v("place"), type: v("type"), client: v("client") || null, summary: v("summary") }); }, "Project added.");
+      if (ok && id) go("/admin/" + id);
+      return;
+    }
   }
 
   /* ---------- router ---------- */
@@ -475,7 +537,7 @@
   }
   window.__first = true;
 
-  document.addEventListener("click", (e) => {
+  const onClick = (e) => {
     const t = e.target.closest("[data-act]");
     if (t) { act(t.dataset.act, t); return; }
     const stage = e.target.closest("[data-stage]");
@@ -484,15 +546,28 @@
       ui.draft = { gid: stage.dataset.stage, x: Math.max(1, Math.min(99, ((e.clientX - r.left) / r.width) * 100)), y: Math.max(1, Math.min(99, ((e.clientY - r.top) / r.height) * 100)) };
       ui.activePin = null; render(true); const ta = $("#np"); if (ta) ta.focus();
     }
-  });
-  document.addEventListener("submit", (e) => {
+  };
+  const onSubmit = (e) => {
     const f = e.target.closest("form[data-form]");
     if (!f) return;
     e.preventDefault();
     if (!f.checkValidity()) { f.reportValidity(); return; }
     form(f.dataset.form, f, new FormData(f));
-  });
-  window.addEventListener("hashchange", () => render());
-  window.addEventListener("storage", (e) => { if (e.key === KEY) { state = load(); render(true); } });
-  render();
+  };
+  const needsData = () => /^#\/(portal|admin)(\/|$)/.test(location.hash);
+
+  /* boot.js calls this once the backend is ready. */
+  window.TRIARCH_START = async function (backend) {
+    B = backend || makeLocal();
+    try { await B.init(); } catch (e) { ui.fatal = errText(e); }
+    B.onChange = () => render(true);
+    document.addEventListener("click", onClick);
+    document.addEventListener("submit", onSubmit);
+    window.addEventListener("hashchange", async () => {
+      if (!B.demo && needsData() && user()) { try { await B.refresh(); } catch (e) { toast(errText(e)); } }
+      render();
+    });
+    render();
+    if (ui.fatal) toast("The site could not reach its database. " + ui.fatal);
+  };
 })();
