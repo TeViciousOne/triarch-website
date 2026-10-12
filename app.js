@@ -147,50 +147,52 @@
   }
   function home() {
     const feat = S.portfolio[3];
-    const stat = (i, cls) => `<div class="widget ${cls || ""}"><strong>${esc(S.successStats[i][0])}</strong><span>${esc(S.successStats[i][1])}</span></div>`;
+    const pts = [["Listen", "We start with how you live and work, and what the site allows."], ["Design", "Clear drawings and honest options, explained in plain words."], ["Deliver", "You follow progress online and approve each stage before we move on."]];
+    const steps = [["Concept", "Ideas, sketches and a first look at the site."], ["Design", "Plans, materials and details settled together."], ["Permits", "We prepare and submit the applications."], ["Construction", "Regular site visits and photos shared with you."], ["Handover", "Final checks, then the keys."]];
     return { title: S.studio.slogan, area: "home", html: `
       <div class="wrap hero">
         <h1>${esc(S.studio.slogan)}</h1>
-        <p class="lead">${esc(S.studio.short)} is a small architecture studio for houses, schools and workplaces. We stay with every project from the first sketch to handover.</p>
-        <div class="hero-actions"><a class="btn" href="#/contact">Book a consultation</a><a class="btn ghost" href="#/projects">See our work</a></div>
-        <dl class="hero-stats">${S.heroStats.map((x) => `<div><dt>${esc(x[0])}</dt><dd>${esc(x[1])}</dd></div>`).join("")}</dl>
+        <p class="lead">${esc(S.studio.short)} is an architecture studio for homes, interiors and workplaces. Every project is drawn with care and shared with you at each step.</p>
+        <div class="hero-actions"><a class="btn" href="#/contact">Start a conversation</a><a class="btn ghost" href="#/projects">See our work</a></div>
         <div class="hero-drawing">${drawing("elevation", feat.seed, { trace: true, label: feat.name + ", elevation" })}</div>
         <div class="hero-caption"><span>${esc(feat.name)}, south elevation</span><a class="link" href="#/projects/${feat.slug}">See the project</a></div>
       </div>
 
-      <section class="wrap section" aria-labelledby="about">
-        <p class="idx">01 About us</p>
-        <div class="section-intro"><h2 id="about">Design with purpose. Build with care.</h2>
-          <p>${esc(S.studio.name)} is a studio of nine architects. We listen first, draw carefully, and make sure what gets built matches what we promised. Every client follows their building online and can tell us what they think at each stage.</p></div>
-        <div class="duo">
-          <figure class="shot"><div class="frame">${drawing("elevation", S.portfolio[0].seed, { label: "Ridge House, elevation" })}</div><figcaption>Ridge House, south elevation</figcaption></figure>
-          <figure class="shot"><div class="frame">${drawing("plan", 8, { label: "House plan" })}</div><figcaption>Ground floor plan, private house</figcaption></figure>
-        </div>
+      <section class="wrap section" aria-labelledby="points">
+        <p class="idx">01 Our approach</p>
+        <div class="section-intro"><h2 id="points">Three points that guide every project.</h2>
+          <p>Like the triangle in our mark, each point supports the others. Nothing is rushed and nothing is hidden.</p></div>
+        <div class="points">${pts.map((p, n) => `<div class="widget point ${["t-blue", "", "t-green"][n]}"><strong>${n + 1}</strong><div><h3>${p[0]}</h3><span>${esc(p[1])}</span></div></div>`).join("")}</div>
       </section>
 
-      <section class="wrap section" aria-labelledby="success">
-        <p class="idx">02 Our success</p>
-        <div class="section-intro"><h2 id="success">Expert guidance at every stage of your project.</h2>
-          <p>From the first idea to the keys in your hand, we keep the work clear and the decisions yours.</p></div>
-        <div class="bento">
-          ${stat(0, "t-blue")}${stat(1)}
+      <section class="wrap section" aria-labelledby="svc">
+        <p class="idx">02 What we design</p>
+        <div class="section-intro"><h2 id="svc">From the first sketch to the last detail.</h2>
+          <p>Whatever the size, we take care of the drawings, the paperwork and the conversation with builders.</p></div>
+        <div class="svc-grid">${S.services.map((x) => `<a class="svc" href="#/contact"><h3>${esc(x[0])}</h3><p>${esc(x[1])}</p><span class="link">Ask about this</span></a>`).join("")}</div>
+      </section>
+
+      <section class="wrap section" aria-labelledby="how">
+        <p class="idx">03 How it works</p>
+        <div class="section-intro"><h2 id="how">Five clear steps.</h2>
+          <p>You always know where your project stands and what comes next.</p></div>
+        <ol class="steps">${steps.map((x, n) => `<li><b>${n + 1}</b><div><strong>${x[0]}</strong><span>${esc(x[1])}</span></div></li>`).join("")}</ol>
+      </section>
+
+      <section class="wrap section" aria-labelledby="portal">
+        <div class="portal-tease">
+          <div><p class="idx">Your project, online</p><h2 id="portal">A private place to follow your building.</h2>
+            <p class="muted" style="margin-top:12px">Every client gets a personal login. See progress, view drawings and photos, and tell us what you think at each stage, from your phone or computer.</p>
+            <a class="btn" href="#/login" style="margin-top:20px">Client login</a></div>
           <div class="widget photo" role="img" aria-label="Exterior render">${drawing("render", 5, { label: "Exterior render, evening" })}</div>
-          <div class="widget photo" role="img" aria-label="Site photo">${drawing("photo", 3, { label: "Site photo, concrete frame" })}</div>
-          ${stat(2, "t-green")}${stat(3, "t-orange")}
         </div>
       </section>
 
       <section class="wrap section" aria-labelledby="proj">
-        <p class="idx">03 Projects</p>
-        <div class="section-intro"><div><h2 id="proj">Buildings we are proud of.</h2></div>
-          <div><p>A selection of recent houses, schools and public buildings.</p><a class="btn" href="#/projects">View all projects</a></div></div>
+        <p class="idx">04 Selected work</p>
+        <div class="section-intro"><div><h2 id="proj">Selected work.</h2></div>
+          <div><p>A look at the kind of buildings we design.</p><a class="btn" href="#/projects">View all projects</a></div></div>
         <div class="works">${S.portfolio.slice(0, 4).map(workCard).join("")}</div>
-      </section>
-
-      <section class="wrap section" aria-labelledby="news">
-        <p class="idx">04 News</p>
-        <div class="section-intro"><h2 id="news">Recent news from the studio.</h2><p>Openings, awards and what we are working on.</p></div>
-        <div class="works">${S.news.map((n) => `<article class="work static"><div class="work-img">${drawing(n.kind, n.seed, { label: n.title })}</div><div class="work-cap"><strong>${esc(n.title)}</strong><span class="muted small">${fmt(n.date)}</span></div></article>`).join("")}</div>
       </section>
 
       <section class="wrap section" aria-labelledby="faq">
@@ -200,14 +202,11 @@
       </section>
 
       <section class="wrap section" aria-label="Get started">
-        <div class="cta-pair">
-          <div class="cta-card tint"><div><h2>Start a project</h2><p class="muted" style="margin-top:12px">Tell us about your site and what you would like to build.</p></div><div><a class="btn" href="#/contact">Get in touch</a></div></div>
-          <div class="cta-card"><div><h2>Already a client?</h2><p class="muted" style="margin-top:12px">Follow progress, review drawings and send feedback.</p></div><div><a class="btn ghost" href="#/login">Client login</a></div></div>
-        </div>
+        <div class="cta-card tint cta-wide"><div><h2>Tell us about your project.</h2><p class="muted" style="margin-top:12px">Call <a class="link" href="tel:${esc(S.studio.phone)}">${esc(S.studio.phone)}</a> or write to <a class="link" href="mailto:${esc(S.studio.email)}">${esc(S.studio.email)}</a>.</p></div><div><a class="btn" href="#/contact">Get in touch</a></div></div>
       </section>` };
   }
   function projectsPage() {
-    return { title: "Projects", area: "projects", html: `<div class="wrap page"><div class="section-head"><h1>Projects</h1><p class="muted">${S.portfolio.length} completed buildings</p></div><div class="cards">${S.portfolio.map(workCard).join("")}</div></div>` };
+    return { title: "Projects", area: "projects", html: `<div class="wrap page"><div class="section-head"><h1>Projects</h1><p class="muted">Selected work</p></div><div class="cards">${S.portfolio.map(workCard).join("")}</div></div>` };
   }
   function projectPage(slug) {
     const i = S.portfolio.findIndex((w) => w.slug === slug);

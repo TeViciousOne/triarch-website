@@ -10,9 +10,7 @@ window.SEED = {
     logo: { light: "assets/logo-light.png", dark: "assets/logo-dark.png", mark: "assets/mark.png" },
   },
 
-  heroStats: [["62", "Projects completed"], ["48", "Happy clients"], ["9", "People in the studio"]],
 
-  successStats: [["62+", "Buildings completed since 2012"], ["48+", "Clients who came back for a second project"], ["300+", "Drawings reviewed online by clients last year"], ["98%", "Of milestones approved without a second round"]],
 
   news: [
     { title: "Kiln Primary School opens its doors", date: "2026-09-15", seed: 23, kind: "elevation", text: "The first pupils walked into the new classrooms this month." },
