@@ -2,6 +2,11 @@
    Row-level security in the database decides who may see or change what; nothing here is trusted for that. */
 export function makeSupa(sb) {
   const BUCKET = "project-files";
+  /* Accounts sign in with a username. Supabase wants an email-shaped identifier, so the username maps to an internal one
+     that is never used to send mail. */
+  const MAIL_DOMAIN = "@triarch.example.com";
+  const toLogin = (username) => String(username || "").trim().toLowerCase() + MAIL_DOMAIN;
+  const validUsername = (u) => /^[a-z0-9._-]{3,32}$/.test(u);
   let me = null;
   let projects = [];
   let clientList = [];
@@ -21,8 +26,8 @@ export function makeSupa(sb) {
     const { data } = await sb.auth.getSession();
     const session = data && data.session;
     if (!session) { me = null; return; }
-    const prof = must(await sb.from("profiles").select("id, full_name, role").eq("id", session.user.id).maybeSingle());
-    me = prof ? { id: prof.id, role: prof.role, name: prof.full_name, email: session.user.email, projects: [] } : null;
+    const prof = must(await sb.from("profiles").select("id, full_name, role, username").eq("id", session.user.id).maybeSingle());
+    me = prof ? { id: prof.id, role: prof.role, name: prof.full_name, username: prof.username || "", projects: [] } : null;
   }
 
   async function loadProjects() {
@@ -31,14 +36,14 @@ export function makeSupa(sb) {
     const [pr, ms, gi, pn, rp, dc, mg, mem, pf] = await Promise.all([
       q("projects", { col: "last_update" }), q("milestones"), q("gallery_items", { col: "created_at" }), q("pins", { col: "created_at", asc: true }),
       q("pin_replies", { col: "created_at", asc: true }), q("documents", { col: "created_at" }), q("messages", { col: "created_at", asc: true }),
-      q("project_members"), sb.from("profiles").select("id, full_name, role"),
+      q("project_members"), sb.from("profiles").select("id, full_name, role, username"),
     ]);
     const [P, M, G, PN, RP, D, MG, MEM, PF] = [pr, ms, gi, pn, rp, dc, mg, mem, pf].map(must);
     const person = {};
     PF.forEach((x) => (person[x.id] = x));
     const nm = (id) => (person[id] ? person[id].full_name : "Studio");
     const rl = (id) => (person[id] ? person[id].role : "staff");
-    clientList = PF.filter((x) => x.role === "client").map((x) => ({ id: x.id, name: x.full_name }));
+    clientList = PF.filter((x) => x.role === "client").map((x) => ({ id: x.id, name: x.full_name, username: x.username || "" }));
 
     /* Private images: ask Storage for short-lived links. */
     const paths = G.filter((g) => g.storage_path).map((g) => g.storage_path);
@@ -99,13 +104,31 @@ export function makeSupa(sb) {
     projects: () => projects,
     clients: () => clientList,
 
-    async signIn(email, password) {
-      const r = await sb.auth.signInWithPassword({ email, password });
-      if (r.error) throw new Error(/invalid login/i.test(r.error.message) ? "That email and password don't match." : r.error.message);
+    async signIn(username, password) {
+      const name = String(username || "").trim().toLowerCase();
+      if (!validUsername(name)) throw new Error("That username and password don't match.");
+      const r = await sb.auth.signInWithPassword({ email: toLogin(name), password });
+      if (r.error) throw new Error(/invalid login/i.test(r.error.message) ? "That username and password don't match." : r.error.message);
       await loadMe();
       if (!me) throw new Error("This account has no profile yet. Please contact the studio.");
       await loadProjects();
     },
+    async changePassword(current, next) {
+      if (!me) throw new Error("Please sign in again.");
+      /* Check the current password first, so a borrowed open browser cannot change it. */
+      const check = await sb.auth.signInWithPassword({ email: toLogin(me.username), password: current });
+      if (check.error) throw new Error("The current password is not correct.");
+      const r = await sb.auth.updateUser({ password: next });
+      if (r.error) throw new Error(/different from the old/i.test(r.error.message) ? "Choose a password you have not used before." : r.error.message);
+    },
+    async createClient(f) {
+      const name = String(f.username).trim().toLowerCase();
+      if (!validUsername(name)) throw new Error("The username must be 3 to 32 characters: letters, numbers, dots, dashes or underscores.");
+      must(await sb.rpc("create_client_account", { p_username: name, p_full_name: f.name, p_password: f.password }));
+      await loadProjects();
+      return { username: name, password: f.password };
+    },
+    async resetClientPassword(id, password) { must(await sb.rpc("reset_client_password", { p_user: id, p_password: password })); },
     async signOut() { await sb.auth.signOut(); me = null; projects = []; },
 
     async approve(pid, mid) { must(await sb.rpc("respond_to_milestone", { mid, decision: "approved", reply: "" })); await loadProjects(); },

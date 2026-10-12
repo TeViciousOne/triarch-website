@@ -4,9 +4,10 @@ window.SEED = {
     name: "triArch",
     short: "triArch",
     slogan: "Three points. One vision.",
-    email: "hello@triarch.example",
-    phone: "+00 000 000 000",
+    email: "triarch.studio02@gmail.com",
+    phone: "+355698405408",
     address: "12 Studio Street, Your City",
+    logo: { light: "assets/logo-light.png", dark: "assets/logo-dark.png", mark: "assets/mark.png" },
   },
 
   heroStats: [["62", "Projects completed"], ["48", "Happy clients"], ["9", "People in the studio"]],
@@ -28,9 +29,9 @@ window.SEED = {
   phases: ["Concept", "Design development", "Permits", "Construction", "Handover"],
 
   users: [
-    { id: "c1", role: "client", name: "Maya Reyes", email: "maya@example.com", projects: ["p1", "p2"] },
-    { id: "c2", role: "client", name: "Daniel Halden", email: "daniel@halden.example", projects: ["p3"] },
-    { id: "s1", role: "staff", name: "Elena Marku", email: "elena@triarch.example", projects: [] },
+    { id: "c1", role: "client", name: "Maya Reyes", username: "maya", email: "maya@example.com", projects: ["p1", "p2"] },
+    { id: "c2", role: "client", name: "Daniel Halden", username: "daniel", email: "daniel@halden.example", projects: ["p3"] },
+    { id: "s1", role: "staff", name: "Elena Marku", username: "elena", email: "elena@triarch.example", projects: [] },
   ],
 
   portfolio: [

@@ -33,13 +33,21 @@
       async refresh() {},
       user: cur,
       projects: () => state.projects.map((p) => { p.clientName = (S.users.find((u) => u.id === p.client) || {}).name || ""; return p; }),
-      clients: () => S.users.filter((u) => u.role === "client").map((u) => ({ id: u.id, name: u.name })),
+      clients: () => S.users.filter((u) => u.role === "client").map((u) => ({ id: u.id, name: u.name, username: u.username })),
       demoUsers: () => S.users,
-      async signIn(email, password) {
-        const found = S.users.find((x) => x.email.toLowerCase() === String(email).toLowerCase());
-        if (!found || password !== "preview") throw new Error("That email and password don't match. In this preview the password is “preview”, or use one of the accounts below.");
+      async signIn(username, password) {
+        const found = S.users.find((x) => x.username === String(username).trim().toLowerCase());
+        if (!found || password !== "preview") throw new Error("That username and password don't match. In this preview the password is “preview”, or use one of the accounts below.");
         state.session = found.id; save();
       },
+      async changePassword() { throw new Error("The preview has no real passwords. On the real site this changes your password."); },
+      async createClient(f) {
+        const un = String(f.username).trim().toLowerCase();
+        if (S.users.some((u) => u.username === un)) throw new Error("That username is already taken");
+        S.users.push({ id: uid(), role: "client", name: f.name, username: un, email: "", projects: [] });
+        return { username: un, password: f.password };
+      },
+      async resetClientPassword() {},
       async signInAs(id) { state.session = id; save(); },
       async signOut() { state.session = null; save(); },
       async reset() { const u = cur(); state = fresh(); state.session = u && u.id; save(); },
@@ -87,23 +95,26 @@
   const go = (path) => { location.hash = "#" + path; };
 
   /* ---------- shell ---------- */
+  /* The triArch logo: light version, with a dark version for dark mode. */
+  const logoHTML = (cls) => `<picture><source media="(prefers-color-scheme: dark)" srcset="${esc(S.studio.logo.dark)}"><img class="${cls}" src="${esc(S.studio.logo.light)}" alt="${esc(S.studio.name)}. ${esc(S.studio.slogan)}" decoding="async"></picture>`;
+
   function headHTML(area) {
     const u = user();
     const home = u ? (u.role === "staff" ? "/admin" : "/portal") : "/login";
     const cur = (a) => (area === a ? ' aria-current="page"' : "");
     return `<div class="pill">
-      <a class="brand" href="#/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text"><span class="brand-name">${esc(S.studio.name)}</span><span class="brand-slogan">${esc(S.studio.slogan)}</span></span></a>
+      <a class="brand" href="#/" aria-label="${esc(S.studio.name)}, home">${logoHTML("logo-img")}</a>
       <button class="menu-btn" data-act="menu" aria-expanded="false" aria-controls="nav">Menu</button>
       <nav class="nav" id="nav" aria-label="Main">
         <a href="#/projects"${cur("projects")}>Projects</a>
         <a href="#/studio"${cur("studio")}>Studio</a>
         <a href="#/contact"${cur("contact")}>Contact</a>
-        ${u ? `<a href="#${home}"${cur("portal")}>${u.role === "staff" ? "Admin" : "Your projects"}</a><button class="linklike" data-act="logout">Sign out</button>` : `<a class="cta" href="#/login"${cur("login")}>Client login</a>`}
+        ${u ? `<a href="#${home}"${cur("portal")}>${u.role === "staff" ? "Admin" : "Your projects"}</a><a href="#/account"${cur("account")}>Account</a><button class="linklike" data-act="logout">Sign out</button>` : `<a class="cta" href="#/login"${cur("login")}>Client login</a>`}
       </nav></div>`;
   }
   function footHTML() {
     return `<div class="wrap">
-      <div class="col"><strong>${esc(S.studio.name)}</strong><span class="muted">${esc(S.studio.address)}</span></div>
+      <div class="col">${logoHTML("foot-logo")}<span class="muted">${esc(S.studio.address)}</span></div>
       <div class="col"><a class="link" href="mailto:${esc(S.studio.email)}">${esc(S.studio.email)}</a><span class="muted">${esc(S.studio.phone)}</span></div>
       <div class="col"><a class="link" href="#/login">Client login</a><a class="link" href="#/projects">Projects</a>${B.demo ? '<span class="muted">Preview with sample data</span>' : ""}</div></div>`;
   }
@@ -225,11 +236,12 @@
     const demos = B.demo ? B.demoUsers().map((u) => `<button class="demo" data-act="login" data-id="${u.id}"><span>${esc(u.name)}</span><span class="muted small">${u.role === "staff" ? "Studio staff" : "Client"}</span></button>`).join("") : "";
     return { title: "Client login", area: "login", html: `
       <div class="wrap"><div class="auth">
+        <div class="auth-logo">${logoHTML("auth-logo-img")}</div>
         <h1>Client login</h1>
         <p class="muted lede">Sign in to see your projects, drawings and messages.</p>
         <form class="sheet" data-form="login" novalidate>
           ${ui.loginError ? `<p class="error" role="alert">${esc(ui.loginError)}</p>` : ""}
-          <div class="field"><label for="l-email">Email</label><input id="l-email" name="email" type="email" autocomplete="username" required></div>
+          <div class="field"><label for="l-user">Username</label><input id="l-user" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
           <div class="field"><label for="l-pass">Password</label><input id="l-pass" name="password" type="password" autocomplete="current-password" required></div>
           <button class="btn" type="submit" style="width:100%">Sign in</button>
         </form>
@@ -282,7 +294,45 @@
       <h2 style="font-size:var(--step-1);margin-bottom:14px">Needs attention</h2>
       <div class="rows" style="margin-bottom:48px">${todo.map((t) => `<div><a class="k" href="#/admin/${t.p.id}/${t.tab}">${esc(t.p.name)}</a><span class="${t.quiet ? "muted" : ""}">${esc(t.text)}</span></div>`).join("") || '<p class="empty">Nothing needs attention.</p>'}</div>
       <h2 style="font-size:var(--step-1);margin-bottom:14px">All projects</h2><div class="plist">${list.map((p) => projectRow("admin", p)).join("") || '<p class="empty">No projects yet. Add the first one below.</p>'}</div>
+      ${clientsSection()}
       ${newProjectForm()}</div>` };
+  }
+
+  function accountPage() {
+    const u = user();
+    if (!u) { ui.next = location.hash; go("/login"); return { title: "Account", area: "login", html: "" }; }
+    return { title: "Account", area: "account", html: `<div class="wrap portal-head">
+      <h1 class="large-title">Account</h1>
+      <p class="muted" style="margin:8px 0 28px">${esc(u.name)}${u.username ? ", username <strong>" + esc(u.username) + "</strong>" : ""}</p>
+      <form class="sheet" data-form="password" novalidate style="max-width:520px">
+        <h2 style="font-size:var(--step-1);margin-bottom:16px">Change password</h2>
+        ${ui.accountError ? `<p class="error" role="alert">${esc(ui.accountError)}</p>` : ""}
+        <div class="field"><label for="pw-old">Current password</label><input id="pw-old" name="current" type="password" autocomplete="current-password" required></div>
+        <div class="field"><label for="pw-new">New password</label><input id="pw-new" name="next" type="password" autocomplete="new-password" minlength="8" required><span class="hint">At least 8 characters.</span></div>
+        <div class="field"><label for="pw-new2">New password again</label><input id="pw-new2" name="again" type="password" autocomplete="new-password" minlength="8" required></div>
+        <button class="btn" type="submit" style="width:100%">Change password</button>
+      </form></div>` };
+  }
+  const randomPassword = () => {
+    const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    const a = new Uint32Array(12); crypto.getRandomValues(a);
+    return Array.from(a, (n) => chars[n % chars.length]).join("");
+  };
+  function clientsSection() {
+    const cl = B.clients();
+    const created = ui.created ? `<div class="sheet" style="margin-bottom:20px" role="status"><h3 style="font-size:1.1rem">${ui.created.reset ? "New password set" : "Account created"} for ${esc(ui.created.name)}</h3>
+        <p class="muted small" style="margin:6px 0 12px">Give these details to the client. This is the only time the password is shown. They can change it under Account after signing in.</p>
+        <dl class="rows"><div><dt class="k">Username</dt><dd><strong>${esc(ui.created.username)}</strong></dd></div><div><dt class="k">Password</dt><dd><strong>${esc(ui.created.password)}</strong></dd></div></dl>
+        <div class="actions" style="margin-top:12px"><button class="btn ghost sm" data-act="dismiss-created">Done</button></div></div>` : "";
+    return `<h2 style="font-size:var(--step-1);margin:48px 0 14px">Clients</h2>${created}
+      <div class="rows" style="margin-bottom:8px">${cl.map((c) => `<div><span class="k">${esc(c.name)}<span class="muted small"> (${esc(c.username || "no username")})</span></span>
+        <form class="toolbar" data-form="reset-pw" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-username="${esc(c.username || "")}" style="margin:0"><label class="small" for="rp-${esc(c.id)}" style="position:absolute;left:-999px">New password for ${esc(c.name)}</label><input id="rp-${esc(c.id)}" name="password" type="text" minlength="8" placeholder="New password" autocomplete="off" style="min-width:150px" required><button class="btn ghost sm" type="submit">Set password</button></form></div>`).join("") || '<p class="empty">No client accounts yet.</p>'}</div>
+      <form class="inline-form" data-form="create-client"><h3 style="font-size:1.1rem">Create a client account</h3>
+        <div class="field" style="margin:0"><label for="cc-n">Client name</label><input id="cc-n" name="name" required></div>
+        <div class="form-row"><div class="field" style="margin:0"><label for="cc-u">Username</label><input id="cc-u" name="username" autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9._\\-]{3,32}" title="3 to 32 letters, numbers, dots, dashes or underscores" required></div>
+        <div class="field" style="margin:0"><label for="cc-p">Password</label><input id="cc-p" name="password" type="text" minlength="8" autocomplete="off" required></div></div>
+        <p class="hint">Use letters, numbers, dots, dashes or underscores for the username. Then add them to a project below.</p>
+        <div class="actions"><button class="btn sm" type="submit">Create account</button><button class="btn ghost sm" type="button" data-act="gen-password">Generate password</button></div></form>`;
   }
 
   function newProjectForm() {
@@ -450,6 +500,8 @@
       try { const url = await B.docUrl(d); if (url) window.open(url, "_blank", "noopener"); else toast("This entry has no file attached."); } catch (e) { toast(errText(e)); }
       return;
     }
+    if (name === "gen-password") { const i = $("#cc-p"); if (i) i.value = randomPassword(); return; }
+    if (name === "dismiss-created") { ui.created = null; render(true); return; }
     if (name === "open-changes") { ui.changesFor = el.dataset.m; render(true); return; }
     if (name === "cancel-changes") { ui.changesFor = null; render(true); return; }
     if (name === "approve") { await run(() => B.approve(el.dataset.p, el.dataset.m), "Approved. The studio has been told."); return; }
@@ -469,7 +521,7 @@
     const u = user(), v = (k) => String(d.get(k) || "").trim(), pid = f.dataset.p;
     if (name === "login") {
       const btn = f.querySelector("button[type=submit]"); if (btn) btn.disabled = true;
-      try { await B.signIn(v("email"), String(d.get("password") || "")); }
+      try { await B.signIn(v("username"), String(d.get("password") || "")); }
       catch (e) { ui.loginError = errText(e); render(true); return; }
       afterSignIn(); return;
     }
@@ -480,6 +532,13 @@
       f.reset(); $("#c-err").innerHTML = ""; toast("Message sent. We'll reply within two working days."); return;
     }
     if (!u) return;
+    if (name === "password") {
+      if (v("next").length < 8) { ui.accountError = "The new password must be at least 8 characters."; render(true); return; }
+      if (d.get("next") !== d.get("again")) { ui.accountError = "The two new passwords are not the same."; render(true); return; }
+      try { await B.changePassword(String(d.get("current")), String(d.get("next"))); }
+      catch (e) { ui.accountError = errText(e); render(true); return; }
+      ui.accountError = null; f.reset(); render(true); toast("Password changed."); return;
+    }
     if (name === "changes") { ui.changesFor = null; await run(() => B.requestChanges(pid, f.dataset.m, v("text")), "Sent. The studio will review your changes."); return; }
     if (name === "pin-add") { const dr = ui.draft; ui.draft = null; await run(() => B.addPin(pid, f.dataset.g, dr.x, dr.y, v("text")), "Comment added."); return; }
     if (name === "pin-reply") { await run(() => B.replyPin(pid, f.dataset.g, f.dataset.id, v("text"))); return; }
@@ -497,6 +556,16 @@
       const file = d.get("file"); const doc = { name: v("name"), type: v("type"), version: v("version"), file: file && file.size ? file : null };
       if (doc.file && doc.file.size > 40 * 1024 * 1024) { toast("That file is larger than 40 MB."); return; }
       await run(() => B.addDoc(pid, doc), "Document added."); return;
+    }
+    if (name === "create-client") {
+      const acc = { name: v("name"), username: v("username").toLowerCase(), password: String(d.get("password")) };
+      await run(async () => { await B.createClient(acc); ui.created = { name: acc.name, username: acc.username, password: acc.password }; }, "Account created.");
+      return;
+    }
+    if (name === "reset-pw") {
+      const pw = String(d.get("password"));
+      await run(async () => { await B.resetClientPassword(f.dataset.id, pw); ui.created = { name: f.dataset.name, username: f.dataset.username, password: pw, reset: true }; }, "Password set.");
+      return;
     }
     if (name === "add-project") {
       let id = null;
@@ -516,6 +585,7 @@
     else if (a === "projects") page = b ? projectPage(b) : projectsPage();
     else if (a === "studio") page = studioPage();
     else if (a === "contact") page = contactPage();
+    else if (a === "account") page = accountPage();
     else if (a === "login") { if (user()) { go(user().role === "staff" ? "/admin" : "/portal"); return; } page = loginPage(); }
     else if (a === "portal" || a === "admin") page = portalRoute(a, b, c, d);
     else page = notFound();

@@ -214,3 +214,47 @@ alter table contact_requests enable row level security;
 create policy anyone_can_send on contact_requests for insert to anon, authenticated with check (true);
 create policy staff_read on contact_requests for select to authenticated using (is_staff());
 create policy staff_delete on contact_requests for delete to authenticated using (is_staff());
+
+-- ---------- third step: usernames and studio-created accounts ----------
+alter table profiles add column username text;
+alter table profiles add constraint username_format check (username is null or username ~ '^[a-z0-9._-]{3,32}$');
+create unique index profiles_username_key on profiles (username);
+
+create or replace function handle_new_user() returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into profiles (id, full_name, role, username)
+  values (new.id, coalesce(nullif(new.raw_user_meta_data->>'full_name', ''), 'New user'), 'client', nullif(new.raw_user_meta_data->>'username', ''));
+  return new;
+end $$;
+
+-- Staff create client accounts from the Admin area. People sign in with a username; Supabase wants an email-shaped
+-- identifier, so the username becomes <username>@triarch.example.com internally. That address is never used for mail.
+create function create_client_account(p_username text, p_full_name text, p_password text) returns uuid
+language plpgsql security definer set search_path = public, extensions, auth as $$
+declare uid uuid := gen_random_uuid(); uname text := lower(trim(coalesce(p_username, ''))); mail text; fname text := trim(coalesce(p_full_name, ''));
+begin
+  if not is_staff() then raise exception 'Only studio staff can create accounts'; end if;
+  if uname !~ '^[a-z0-9._-]{3,32}$' then raise exception 'The username must be 3 to 32 characters: letters, numbers, dots, dashes or underscores'; end if;
+  if char_length(coalesce(p_password, '')) < 8 then raise exception 'The password must be at least 8 characters'; end if;
+  if char_length(fname) < 1 or char_length(fname) > 200 then raise exception 'Enter the client''s name'; end if;
+  if exists (select 1 from profiles where username = uname) then raise exception 'That username is already taken'; end if;
+  mail := uname || '@triarch.example.com';
+  insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+    confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, phone_change, phone_change_token, reauthentication_token)
+  values ('00000000-0000-0000-0000-000000000000', uid, 'authenticated', 'authenticated', mail, crypt(p_password, gen_salt('bf')), now(),
+    '{"provider":"email","providers":["email"]}', jsonb_build_object('full_name', fname, 'username', uname), now(), now(), '', '', '', '', '', '', '', '');
+  insert into auth.identities (user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
+  values (uid, jsonb_build_object('sub', uid::text, 'email', mail, 'email_verified', true), 'email', uid::text, now(), now(), now());
+  return uid;
+end $$;
+revoke execute on function create_client_account(text, text, text) from public, anon;
+
+create function reset_client_password(p_user uuid, p_password text) returns void
+language plpgsql security definer set search_path = public, extensions, auth as $$
+begin
+  if not is_staff() then raise exception 'Only studio staff can change passwords'; end if;
+  if char_length(coalesce(p_password, '')) < 8 then raise exception 'The password must be at least 8 characters'; end if;
+  if not exists (select 1 from profiles where id = p_user and role = 'client') then raise exception 'Client not found'; end if;
+  update auth.users set encrypted_password = crypt(p_password, gen_salt('bf')), updated_at = now() where id = p_user;
+end $$;
+revoke execute on function reset_client_password(uuid, text) from public, anon;
