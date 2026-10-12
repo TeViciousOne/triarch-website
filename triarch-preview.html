@@ -446,6 +446,25 @@ details.edit > summary::-webkit-details-marker { display: none; }
 .rows > div > .btn.sm { justify-self: end; }
 .client-row .client-tools { justify-content: flex-start; }
 
+/* compact client rows: name on the left, actions on one line */
+.rows > div.client-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 16px; }
+.client-row > .k { flex: 1 1 170px; min-width: 0; }
+.client-row .client-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.client-row input.inline { width: 150px; min-height: 36px; padding: 6px 12px; font-size: 0.9375rem; border-radius: 999px; }
+.client-row details.edit { margin: 0; }
+.client-row details.edit > summary { display: inline-flex; align-items: center; min-height: 36px; padding: 0 16px; border-radius: 999px; background: var(--tint); color: var(--link); font-weight: 600; font-size: 0.9375rem; }
+.client-row details.edit[open] { flex: 1 1 100%; order: 9; }
+.client-row details.edit[open] > summary { margin-bottom: 4px; }
+.rows > div.enq { display: block; padding: 12px 16px; }
+@media (max-width: 560px) { .client-row input.inline { flex: 1 1 140px; width: auto; } }
+.client-row .client-tools form { display: flex; gap: 8px; align-items: center; margin: 0; }
+.client-row .btn.sm { min-height: 36px; padding: 0 14px; white-space: nowrap; }
+@media (max-width: 560px) {
+  .client-row .client-tools { display: contents; }
+  .client-row .client-tools form { flex: 1 1 100%; }
+  .client-row .client-tools form input.inline { flex: 1 1 0; width: auto; min-width: 0; }
+}
+
 </style>
 </head>
 <body>
@@ -1187,10 +1206,10 @@ window.CONFIG = { supabaseUrl: "", supabaseKey: "" };
     return `<h2 style="font-size:var(--step-1);margin:48px 0 14px">Clients</h2>${created}
       <div class="rows" style="margin-bottom:8px">${cl.map((c) => `<div class="client-row"><span class="k">${esc(c.name)}<span class="muted small"> (${esc(c.username || "no username")})</span>${c.disabled ? ' <span class="tag hatch">Disabled</span>' : ""}</span>
         <div class="client-tools">
-          <form class="toolbar" data-form="reset-pw" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-username="${esc(c.username || "")}" style="margin:0"><label class="small" for="rp-${esc(c.id)}" style="position:absolute;left:-999px">New password for ${esc(c.name)}</label><input id="rp-${esc(c.id)}" name="password" type="text" minlength="8" placeholder="New password" autocomplete="off" style="min-width:150px" required><button class="btn ghost sm" type="submit">Set password</button></form>
+          <form class="toolbar" data-form="reset-pw" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-username="${esc(c.username || "")}" style="margin:0"><label class="small" for="rp-${esc(c.id)}" style="position:absolute;left:-999px">New password for ${esc(c.name)}</label><input class="inline" id="rp-${esc(c.id)}" name="password" type="text" minlength="8" placeholder="New password" autocomplete="off" required><button class="btn ghost sm" type="submit">Set password</button></form>
           <button class="btn ghost sm" type="button" data-act="toggle-client" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-disabled="${c.disabled ? "1" : ""}">${c.disabled ? "Enable account" : "Disable account"}</button>
         </div>
-        <details class="edit"><summary>Rename</summary>
+        <details class="edit"><summary>Edit</summary>
           <form class="inline-form" data-form="edit-client" data-id="${esc(c.id)}" style="margin-top:10px">
             <div class="form-row"><div class="field" style="margin:0"><label for="ec-n-${esc(c.id)}">Name</label><input id="ec-n-${esc(c.id)}" name="name" value="${esc(c.name)}" required></div>
             <div class="field" style="margin:0"><label for="ec-u-${esc(c.id)}">Username</label><input id="ec-u-${esc(c.id)}" name="username" value="${esc(c.username || "")}" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9._\\-]{3,32}" required></div></div>

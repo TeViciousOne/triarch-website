@@ -389,10 +389,10 @@
     return `<h2 style="font-size:var(--step-1);margin:48px 0 14px">Clients</h2>${created}
       <div class="rows" style="margin-bottom:8px">${cl.map((c) => `<div class="client-row"><span class="k">${esc(c.name)}<span class="muted small"> (${esc(c.username || "no username")})</span>${c.disabled ? ' <span class="tag hatch">Disabled</span>' : ""}</span>
         <div class="client-tools">
-          <form class="toolbar" data-form="reset-pw" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-username="${esc(c.username || "")}" style="margin:0"><label class="small" for="rp-${esc(c.id)}" style="position:absolute;left:-999px">New password for ${esc(c.name)}</label><input id="rp-${esc(c.id)}" name="password" type="text" minlength="8" placeholder="New password" autocomplete="off" style="min-width:150px" required><button class="btn ghost sm" type="submit">Set password</button></form>
+          <form class="toolbar" data-form="reset-pw" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-username="${esc(c.username || "")}" style="margin:0"><label class="small" for="rp-${esc(c.id)}" style="position:absolute;left:-999px">New password for ${esc(c.name)}</label><input class="inline" id="rp-${esc(c.id)}" name="password" type="text" minlength="8" placeholder="New password" autocomplete="off" required><button class="btn ghost sm" type="submit">Set password</button></form>
           <button class="btn ghost sm" type="button" data-act="toggle-client" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-disabled="${c.disabled ? "1" : ""}">${c.disabled ? "Enable account" : "Disable account"}</button>
         </div>
-        <details class="edit"><summary>Rename</summary>
+        <details class="edit"><summary>Edit</summary>
           <form class="inline-form" data-form="edit-client" data-id="${esc(c.id)}" style="margin-top:10px">
             <div class="form-row"><div class="field" style="margin:0"><label for="ec-n-${esc(c.id)}">Name</label><input id="ec-n-${esc(c.id)}" name="name" value="${esc(c.name)}" required></div>
             <div class="field" style="margin:0"><label for="ec-u-${esc(c.id)}">Username</label><input id="ec-u-${esc(c.id)}" name="username" value="${esc(c.username || "")}" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9._\\-]{3,32}" required></div></div>

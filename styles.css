@@ -428,3 +428,22 @@ details.edit > summary::-webkit-details-marker { display: none; }
 .enq { display: grid; gap: 2px; }
 .rows > div > .btn.sm { justify-self: end; }
 .client-row .client-tools { justify-content: flex-start; }
+
+/* compact client rows: name on the left, actions on one line */
+.rows > div.client-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 16px; }
+.client-row > .k { flex: 1 1 170px; min-width: 0; }
+.client-row .client-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.client-row input.inline { width: 150px; min-height: 36px; padding: 6px 12px; font-size: 0.9375rem; border-radius: 999px; }
+.client-row details.edit { margin: 0; }
+.client-row details.edit > summary { display: inline-flex; align-items: center; min-height: 36px; padding: 0 16px; border-radius: 999px; background: var(--tint); color: var(--link); font-weight: 600; font-size: 0.9375rem; }
+.client-row details.edit[open] { flex: 1 1 100%; order: 9; }
+.client-row details.edit[open] > summary { margin-bottom: 4px; }
+.rows > div.enq { display: block; padding: 12px 16px; }
+@media (max-width: 560px) { .client-row input.inline { flex: 1 1 140px; width: auto; } }
+.client-row .client-tools form { display: flex; gap: 8px; align-items: center; margin: 0; }
+.client-row .btn.sm { min-height: 36px; padding: 0 14px; white-space: nowrap; }
+@media (max-width: 560px) {
+  .client-row .client-tools { display: contents; }
+  .client-row .client-tools form { flex: 1 1 100%; }
+  .client-row .client-tools form input.inline { flex: 1 1 0; width: auto; min-width: 0; }
+}
