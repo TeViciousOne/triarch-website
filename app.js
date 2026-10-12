@@ -32,8 +32,12 @@
       async init() { window.addEventListener("storage", (e) => { if (e.key === KEY) { state = load(); if (B.onChange) B.onChange(); } }); },
       async refresh() {},
       user: cur,
-      projects: () => state.projects.map((p) => { p.clientName = (S.users.find((u) => u.id === p.client) || {}).name || ""; return p; }),
-      clients: () => S.users.filter((u) => u.role === "client").map((u) => ({ id: u.id, name: u.name, username: u.username })),
+      projects: () => state.projects.map((p) => {
+        if (!p.members) p.members = p.client ? [{ id: p.client, name: (S.users.find((u) => u.id === p.client) || {}).name || "" }] : [];
+        p.clientName = p.members.map((m) => m.name).join(", ") || "No client yet"; return p;
+      }),
+      clients: () => S.users.filter((u) => u.role === "client").map((u) => ({ id: u.id, name: u.name, username: u.username, disabled: !!u.disabled })),
+      enquiries: () => [],
       demoUsers: () => S.users,
       async signIn(username, password) {
         const found = S.users.find((x) => x.username === String(username).trim().toLowerCase());
@@ -64,6 +68,21 @@
       async addImage(pid, g) { const P = proj(pid); P.gallery.unshift({ id: uid(), title: g.title, kind: g.kind, seed: 100 + Math.floor(Math.random() * 900), date: today(), pins: [] }); touch(P); note(P, `The studio added “${g.title}” to the gallery.`); save(); },
       async addDoc(pid, d) { const P = proj(pid); P.documents.unshift({ id: uid(), name: d.name, type: d.type, size: "n/a", date: today(), version: d.version || "v1" }); touch(P); note(P, `The studio added the document “${d.name}”.`); save(); },
       async docUrl() { return null; },
+      async updateProject(pid, f) { const P = proj(pid); Object.assign(P, { name: f.name, place: f.place, type: f.type, summary: f.summary }); touch(P); save(); },
+      async deleteProject(pid) { state.projects = state.projects.filter((p) => p.id !== pid); save(); },
+      async addMember(pid, id) { const P = proj(pid); B.projects(); const u = S.users.find((x) => x.id === id); P.members.push({ id, name: u ? u.name : "" }); P.client = P.members[0].id; touch(P); save(); },
+      async removeMember(pid, id) { const P = proj(pid); B.projects(); P.members = P.members.filter((m) => m.id !== id); P.client = P.members[0] ? P.members[0].id : null; touch(P); save(); },
+      async updateMilestone(pid, mid, m) { const x = find(pid, mid); Object.assign(x, { title: m.title, phase: m.phase, due: m.due, note: m.note }); touch(proj(pid)); save(); },
+      async deleteMilestone(pid, mid) { const P = proj(pid); P.milestones = P.milestones.filter((x) => x.id !== mid); touch(P); save(); },
+      async renameImage(pid, gid, title) { proj(pid).gallery.find((g) => g.id === gid).title = title; save(); },
+      async deleteImage(pid, gid) { const P = proj(pid); P.gallery = P.gallery.filter((g) => g.id !== gid); save(); },
+      async renameDoc(pid, did, name) { proj(pid).documents.find((d) => d.id === did).name = name; save(); },
+      async deleteDoc(pid, did) { const P = proj(pid); P.documents = P.documents.filter((d) => d.id !== did); save(); },
+      async deletePin(pid, gid, id) { const g = proj(pid).gallery.find((x) => x.id === gid); g.pins = g.pins.filter((x) => x.id !== id); save(); },
+      async renameClient(id, name) { const u = S.users.find((x) => x.id === id); if (u) u.name = name; },
+      async changeClientUsername(id, username) { const u = S.users.find((x) => x.id === id), un = String(username).trim().toLowerCase(); if (S.users.some((x) => x.username === un && x.id !== id)) throw new Error("That username is already taken"); if (u) u.username = un; },
+      async setClientDisabled(id, disabled) { const u = S.users.find((x) => x.id === id); if (u) u.disabled = disabled; },
+      async deleteEnquiry() {},
       async addProject(f) { const id = uid(); state.projects.unshift({ id, name: f.name, client: f.client, place: f.place, type: f.type, revision: "A", phaseIndex: 0, lastUpdate: today(), seed: 100 + Math.floor(Math.random() * 900), summary: f.summary, milestones: [], gallery: [], documents: [], messages: [] }); save(); return id; },
     };
     return B;
@@ -276,7 +295,7 @@
   function clientHome() {
     const u = user();
     const list = B.projects().filter((p) => u.projects.includes(p.id));
-    return { title: "Your projects", area: "portal", html: `<div class="wrap portal-head"><h1 class="large-title">Your projects</h1><p class="muted" style="margin:8px 0 28px">Signed in as ${esc(u.name)}</p>
+    return { title: "Your projects", area: "portal", html: `<div class="wrap portal-head"><h1 class="large-title">Your projects</h1><p class="muted" style="margin:8px 0 28px">Signed in as ${esc(u.name)}</p>${pwBanner()}
       <div class="plist">${list.map((p) => projectRow("portal", p)).join("") || '<p class="empty">No projects yet.</p>'}</div></div>` };
   }
   function adminHome() {
@@ -295,7 +314,41 @@
       <div class="rows" style="margin-bottom:48px">${todo.map((t) => `<div><a class="k" href="#/admin/${t.p.id}/${t.tab}">${esc(t.p.name)}</a><span class="${t.quiet ? "muted" : ""}">${esc(t.text)}</span></div>`).join("") || '<p class="empty">Nothing needs attention.</p>'}</div>
       <h2 style="font-size:var(--step-1);margin-bottom:14px">All projects</h2><div class="plist">${list.map((p) => projectRow("admin", p)).join("") || '<p class="empty">No projects yet. Add the first one below.</p>'}</div>
       ${clientsSection()}
-      ${newProjectForm()}</div>` };
+      ${newProjectForm()}
+      ${enquiriesSection()}</div>` };
+  }
+
+  const dangerBtn = (label, attrs) => `<button class="btn danger sm" type="button" ${attrs}>${label}</button>`;
+  function pwBanner() {
+    const u = user();
+    return u && u.mustChange ? `<div class="notice" role="status"><strong>Choose your own password.</strong> Your studio gave you a temporary one. <a class="link" href="#/account">Change it now</a></div>` : "";
+  }
+  function projectSettings(p) {
+    const members = p.members || [];
+    const free = B.clients().filter((c) => !members.some((m) => m.id === c.id));
+    return `<section class="panel" aria-labelledby="pset"><h2 id="pset" style="font-size:var(--step-1);margin-bottom:6px">Project settings</h2>
+      <form class="inline-form" data-form="edit-project" data-p="${p.id}" style="margin-top:12px"><h3 style="font-size:1.1rem">Details</h3>
+        <div class="field" style="margin:0"><label for="ep-n">Project name</label><input id="ep-n" name="name" value="${esc(p.name)}" required></div>
+        <div class="form-row"><div class="field" style="margin:0"><label for="ep-p">Location</label><input id="ep-p" name="place" value="${esc(p.place)}"></div>
+        <div class="field" style="margin:0"><label for="ep-t">Type</label><input id="ep-t" name="type" value="${esc(p.type)}"></div></div>
+        <div class="field" style="margin:0"><label for="ep-s">Short description</label><textarea id="ep-s" name="summary">${esc(p.summary)}</textarea></div>
+        <div><button class="btn sm" type="submit">Save details</button></div></form>
+      <div class="inline-form" style="margin-top:32px"><h3 style="font-size:1.1rem">Clients on this project</h3>
+        <div class="rows">${members.map((m) => `<div><span class="k">${esc(m.name)}</span>${dangerBtn("Remove", `data-act="remove-member" data-p="${p.id}" data-id="${esc(m.id)}" data-name="${esc(m.name)}"`)}</div>`).join("") || '<p class="empty">No client has access yet.</p>'}</div>
+        ${free.length ? `<form class="toolbar" data-form="add-member" data-p="${p.id}"><label class="small" for="am-c" style="position:absolute;left:-999px">Give a client access</label><select class="inline" id="am-c" name="client">${free.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select><button class="btn ghost sm" type="submit">Give access</button></form>` : '<p class="hint">Every client already has access, or no client accounts exist yet.</p>'}</div>
+      <div class="inline-form" style="margin-top:32px"><h3 style="font-size:1.1rem">Delete project</h3>
+        <p class="hint">Removes the project with its milestones, images, documents, comments and messages. This cannot be undone.</p>
+        <div>${dangerBtn("Delete project", `data-act="delete-project" data-p="${p.id}" data-name="${esc(p.name)}"`)}</div></div>
+    </section>`;
+  }
+  function editMilestoneForm(p, m) {
+    return `<details class="edit"><summary>Edit or delete</summary>
+      <form class="inline-form" data-form="edit-ms" data-p="${p.id}" data-m="${m.id}" style="margin-top:12px">
+        <div class="field" style="margin:0"><label for="em-t-${m.id}">Title</label><input id="em-t-${m.id}" name="title" value="${esc(m.title)}" required></div>
+        <div class="form-row"><div class="field" style="margin:0"><label for="em-p-${m.id}">Phase</label><select id="em-p-${m.id}" name="phase">${S.phases.map((n, i) => `<option value="${i}"${i === m.phase ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></div>
+        <div class="field" style="margin:0"><label for="em-d-${m.id}">Due date</label><input id="em-d-${m.id}" name="due" type="date" value="${esc(String(m.due).slice(0, 10))}" required></div></div>
+        <div class="field" style="margin:0"><label for="em-n-${m.id}">Note for the client</label><input id="em-n-${m.id}" name="note" value="${esc(m.note)}"></div>
+        <div class="actions"><button class="btn sm" type="submit">Save</button>${dangerBtn("Delete milestone", `data-act="delete-ms" data-p="${p.id}" data-m="${m.id}" data-name="${esc(m.title)}"`)}</div></form></details>`;
   }
 
   function accountPage() {
@@ -304,6 +357,7 @@
     return { title: "Account", area: "account", html: `<div class="wrap portal-head">
       <h1 class="large-title">Account</h1>
       <p class="muted" style="margin:8px 0 28px">${esc(u.name)}${u.username ? ", username <strong>" + esc(u.username) + "</strong>" : ""}</p>
+      ${pwBanner()}
       <form class="sheet" data-form="password" novalidate style="max-width:520px">
         <h2 style="font-size:var(--step-1);margin-bottom:16px">Change password</h2>
         ${ui.accountError ? `<p class="error" role="alert">${esc(ui.accountError)}</p>` : ""}
@@ -318,6 +372,14 @@
     const a = new Uint32Array(12); crypto.getRandomValues(a);
     return Array.from(a, (n) => chars[n % chars.length]).join("");
   };
+  function enquiriesSection() {
+    const list = B.enquiries();
+    if (!list.length) return "";
+    return `<h2 style="font-size:var(--step-1);margin:48px 0 14px">Enquiries from the contact form</h2>
+      <div class="rows">${list.map((q) => `<div class="enq"><span class="k">${esc(q.name)}<span class="muted small"> ${esc(q.email)}${q.kind ? ", " + esc(q.kind) : ""}, ${fmt(String(q.created_at).slice(0, 10))}</span></span>
+        <p style="white-space:pre-wrap;margin:6px 0 10px">${esc(q.message)}</p>
+        <div class="toolbar"><a class="btn ghost sm" href="mailto:${esc(q.email)}">Reply by email</a>${dangerBtn("Delete", `data-act="delete-enquiry" data-id="${esc(q.id)}"`)}</div></div>`).join("")}</div>`;
+  }
   function clientsSection() {
     const cl = B.clients();
     const created = ui.created ? `<div class="sheet" style="margin-bottom:20px" role="status"><h3 style="font-size:1.1rem">${ui.created.reset ? "New password set" : "Account created"} for ${esc(ui.created.name)}</h3>
@@ -325,8 +387,17 @@
         <dl class="rows"><div><dt class="k">Username</dt><dd><strong>${esc(ui.created.username)}</strong></dd></div><div><dt class="k">Password</dt><dd><strong>${esc(ui.created.password)}</strong></dd></div></dl>
         <div class="actions" style="margin-top:12px"><button class="btn ghost sm" data-act="dismiss-created">Done</button></div></div>` : "";
     return `<h2 style="font-size:var(--step-1);margin:48px 0 14px">Clients</h2>${created}
-      <div class="rows" style="margin-bottom:8px">${cl.map((c) => `<div><span class="k">${esc(c.name)}<span class="muted small"> (${esc(c.username || "no username")})</span></span>
-        <form class="toolbar" data-form="reset-pw" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-username="${esc(c.username || "")}" style="margin:0"><label class="small" for="rp-${esc(c.id)}" style="position:absolute;left:-999px">New password for ${esc(c.name)}</label><input id="rp-${esc(c.id)}" name="password" type="text" minlength="8" placeholder="New password" autocomplete="off" style="min-width:150px" required><button class="btn ghost sm" type="submit">Set password</button></form></div>`).join("") || '<p class="empty">No client accounts yet.</p>'}</div>
+      <div class="rows" style="margin-bottom:8px">${cl.map((c) => `<div class="client-row"><span class="k">${esc(c.name)}<span class="muted small"> (${esc(c.username || "no username")})</span>${c.disabled ? ' <span class="tag hatch">Disabled</span>' : ""}</span>
+        <div class="client-tools">
+          <form class="toolbar" data-form="reset-pw" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-username="${esc(c.username || "")}" style="margin:0"><label class="small" for="rp-${esc(c.id)}" style="position:absolute;left:-999px">New password for ${esc(c.name)}</label><input id="rp-${esc(c.id)}" name="password" type="text" minlength="8" placeholder="New password" autocomplete="off" style="min-width:150px" required><button class="btn ghost sm" type="submit">Set password</button></form>
+          <button class="btn ghost sm" type="button" data-act="toggle-client" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-disabled="${c.disabled ? "1" : ""}">${c.disabled ? "Enable account" : "Disable account"}</button>
+        </div>
+        <details class="edit"><summary>Rename</summary>
+          <form class="inline-form" data-form="edit-client" data-id="${esc(c.id)}" style="margin-top:10px">
+            <div class="form-row"><div class="field" style="margin:0"><label for="ec-n-${esc(c.id)}">Name</label><input id="ec-n-${esc(c.id)}" name="name" value="${esc(c.name)}" required></div>
+            <div class="field" style="margin:0"><label for="ec-u-${esc(c.id)}">Username</label><input id="ec-u-${esc(c.id)}" name="username" value="${esc(c.username || "")}" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9._\\-]{3,32}" required></div></div>
+            <p class="hint">If you change the username, tell the client. Their password stays the same.</p>
+            <div><button class="btn sm" type="submit">Save</button></div></form></details></div>`).join("") || '<p class="empty">No client accounts yet.</p>'}</div>
       <form class="inline-form" data-form="create-client"><h3 style="font-size:1.1rem">Create a client account</h3>
         <div class="field" style="margin:0"><label for="cc-n">Client name</label><input id="cc-n" name="name" required></div>
         <div class="form-row"><div class="field" style="margin:0"><label for="cc-u">Username</label><input id="cc-u" name="username" autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9._\\-]{3,32}" title="3 to 32 letters, numbers, dots, dashes or underscores" required></div>
@@ -365,6 +436,7 @@
     const tb = (it) => `<a href="${base}/${it[0]}"${tab === it[0] ? ' aria-current="page"' : ""}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[it[0]]}</svg>${it[2]}${badge(it[3])}</a>`;
     const c = clientOf(p);
     return `<div class="wrap portal-head">
+      ${pwBanner()}
       <p class="crumb"><a href="#/${area}">${staff ? "Admin" : "Your projects"}</a></p>
       <div class="title-block" role="group" aria-label="Project details">
         <div class="name"><span class="k">Project</span><h1 class="v">${esc(p.name)}</h1></div>
@@ -398,7 +470,7 @@
       <section class="panel" aria-labelledby="mst"><div class="section-head"><h2 id="mst" style="font-size:var(--step-1)">Milestones</h2></div>
         <ul class="ms-list">${ms}</ul>
         ${staff ? addMilestoneForm(p) : ""}
-      </section>`;
+      </section>${staff ? projectSettings(p) : ""}`;
   }
   function milestoneHTML(area, p, m) {
     const staff = area === "admin";
@@ -413,6 +485,7 @@
     }
     if (!staff && m.status === "changes") body += `<p class="muted small">The studio is working on your changes.</p>`;
     if (staff) body += `<form class="toolbar" data-form="ms-status" data-p="${p.id}" data-m="${m.id}"><label class="small" for="st-${m.id}">Status</label><select class="inline" id="st-${m.id}" name="status">${[["upcoming", "Upcoming"], ["awaiting", "Waiting for client"], ["changes", "Changes requested"], ["done", "Done"]].map((o) => `<option value="${o[0]}"${o[0] === m.status ? " selected" : ""}>${o[1]}</option>`).join("")}</select><button class="btn ghost sm" type="submit">Update</button></form>`;
+    if (staff) body += editMilestoneForm(p, m);
     return `<li class="ms ${m.status}"><span class="dot" aria-hidden="true"></span>
       <div><h3>${esc(m.title)}</h3><div class="meta">${esc(S.phases[m.phase])}, due ${fmt(m.due)}</div></div>
       <span class="tag ${tag[0]}">${tag[1]}</span>${body ? `<div class="body">${body}</div>` : ""}</li>`;
@@ -451,11 +524,11 @@
     const thread = g.pins.map((x, i) => `<li class="${x.resolved ? "resolved " : ""}${ui.activePin === x.id ? "focus" : ""}" id="t-${x.id}"><span class="n">${i + 1}</span><div>
         <p><strong>${esc(x.author)}</strong> <span class="muted small">${fmt(x.at)}${x.resolved ? ", resolved" : ""}</span></p><p>${esc(x.text)}</p>
         ${(x.replies || []).map((r) => `<p class="quote" style="margin-top:8px"><strong>${esc(r.author)}</strong>: ${esc(r.text)}</p>`).join("")}
-        <form class="toolbar" data-form="pin-reply" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}" style="margin-top:10px"><label class="small" for="r-${x.id}" style="position:absolute;left:-999px">Reply to comment ${i + 1}</label><input id="r-${x.id}" name="text" placeholder="Reply" style="flex:1;min-width:120px" required><button class="btn ghost sm" type="submit">Reply</button>${B.demo || isStaff() ? `<button class="btn ghost sm" type="button" data-act="pin-resolve" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}">${x.resolved ? "Reopen" : "Mark resolved"}</button>` : ""}</form></div></li>`).join("");
+        <form class="toolbar" data-form="pin-reply" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}" style="margin-top:10px"><label class="small" for="r-${x.id}" style="position:absolute;left:-999px">Reply to comment ${i + 1}</label><input id="r-${x.id}" name="text" placeholder="Reply" style="flex:1;min-width:120px" required><button class="btn ghost sm" type="submit">Reply</button>${B.demo || isStaff() ? `<button class="btn ghost sm" type="button" data-act="pin-resolve" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}">${x.resolved ? "Reopen" : "Mark resolved"}</button>` : ""}${isStaff() ? dangerBtn("Delete", `data-act="delete-pin" data-p="${p.id}" data-g="${g.id}" data-id="${x.id}"`) : ""}</form></div></li>`).join("");
     const form = ui.draft && ui.draft.gid === g.id
       ? `<form class="reply" data-form="pin-add" data-p="${p.id}" data-g="${g.id}" style="margin-bottom:24px"><div class="field" style="margin:0"><label for="np">Your comment</label><textarea id="np" name="text" required autofocus></textarea></div><div class="actions"><button class="btn sm" type="submit">Post comment</button><button class="btn ghost sm" type="button" data-act="pin-cancel">Cancel</button></div></form>`
       : `<p class="muted" style="margin-bottom:24px">Click the image to place a comment.</p>`;
-    return `<section class="panel"><p class="small" style="margin-bottom:12px"><a href="#/${area}/${p.id}/gallery">All images</a></p><h2 style="font-size:var(--step-1);margin-bottom:20px">${esc(g.title)}</h2>
+    return `<section class="panel"><p class="small" style="margin-bottom:12px"><a href="#/${area}/${p.id}/gallery">All images</a></p><h2 style="font-size:var(--step-1);margin-bottom:20px">${esc(g.title)}</h2>${isStaff() ? `<div class="toolbar" style="margin:-8px 0 16px"><button class="btn ghost sm" type="button" data-act="rename-image" data-p="${p.id}" data-g="${g.id}" data-name="${esc(g.title)}">Rename</button>${dangerBtn("Delete image", `data-act="delete-image" data-p="${p.id}" data-g="${g.id}" data-name="${esc(g.title)}"`)}</div>` : ""}
       <div class="viewer"><div><div class="stage" data-stage="${g.id}">${media(g, g.title)}${pins}${draft}</div>
       <div class="toolbar" style="margin-top:12px"><button class="btn ghost sm" data-act="pin-centre" data-g="${g.id}">Add a comment without clicking</button><span class="hint">${esc(g.kind === "photo" ? "Site photo" : g.kind[0].toUpperCase() + g.kind.slice(1))}, ${fmt(g.date)}</span></div></div>
       <div>${form}<ul class="thread">${thread || ""}</ul>${thread ? "" : '<p class="empty" style="margin-top:0">No comments yet.</p>'}</div></div></section>`;
@@ -463,7 +536,7 @@
 
   function documentsTab(area, p) {
     const staff = area === "admin";
-    return `<section class="panel"><div class="docs">${p.documents.map((d) => `<div class="doc"><div><strong style="font-weight:560">${esc(d.name)}</strong><div class="meta muted small">Version ${esc(d.version)}, ${esc(d.size)}, added ${fmt(d.date)}</div></div><span class="type">${esc(d.type)}</span><button class="btn ghost sm" data-act="download" data-p="${p.id}" data-id="${d.id}" data-name="${esc(d.name)}">Download</button></div>`).join("") || '<p class="empty">No documents yet.</p>'}</div>
+    return `<section class="panel"><div class="docs">${p.documents.map((d) => `<div class="doc"><div><strong style="font-weight:560">${esc(d.name)}</strong><div class="meta muted small">Version ${esc(d.version)}, ${esc(d.size)}, added ${fmt(d.date)}</div></div><span class="type">${esc(d.type)}</span><button class="btn ghost sm" data-act="download" data-p="${p.id}" data-id="${d.id}" data-name="${esc(d.name)}">Download</button>${staff ? `<div class="doc-tools"><button class="btn ghost sm" type="button" data-act="rename-doc" data-p="${p.id}" data-id="${d.id}" data-name="${esc(d.name)}">Rename</button>${dangerBtn("Delete", `data-act="delete-doc" data-p="${p.id}" data-id="${d.id}" data-name="${esc(d.name)}"`)}</div>` : ""}</div>`).join("") || '<p class="empty">No documents yet.</p>'}</div>
       ${staff ? `<form class="inline-form" data-form="add-doc" data-p="${p.id}" style="margin-top:40px"><h3 style="font-size:1.1rem">Add a document</h3><p class="hint">${B.demo ? "The preview records the name only. The real site stores the file securely." : "The file is stored privately. Only the studio and this project's clients can open it."}</p>
         <div class="field" style="margin:0"><label for="ad-n">Document name</label><input id="ad-n" name="name" required></div>
         <div class="form-row"><div class="field" style="margin:0"><label for="ad-t">File type</label><select id="ad-t" name="type"><option>PDF</option><option>DWG</option><option>IFC</option><option>XLSX</option><option>DOCX</option></select></div><div class="field" style="margin:0"><label for="ad-v">Version</label><input id="ad-v" name="version" value="v1"></div></div>
@@ -502,6 +575,21 @@
     }
     if (name === "gen-password") { const i = $("#cc-p"); if (i) i.value = randomPassword(); return; }
     if (name === "dismiss-created") { ui.created = null; render(true); return; }
+    const sure = (msg) => confirm(msg);
+    if (name === "delete-project") { if (!sure(`Delete the project “${el.dataset.name}”?\n\nIts milestones, images, documents, comments and messages will be removed. This cannot be undone.`)) return; if (await run(() => B.deleteProject(el.dataset.p), "Project deleted.")) go("/admin"); return; }
+    if (name === "remove-member") { if (!sure(`Remove ${el.dataset.name}'s access to this project?`)) return; await run(() => B.removeMember(el.dataset.p, el.dataset.id), "Access removed."); return; }
+    if (name === "delete-ms") { if (!sure(`Delete the milestone “${el.dataset.name}”?`)) return; await run(() => B.deleteMilestone(el.dataset.p, el.dataset.m), "Milestone deleted."); return; }
+    if (name === "rename-image") { const t = prompt("New name for this image", el.dataset.name); if (t === null || !t.trim()) return; await run(() => B.renameImage(el.dataset.p, el.dataset.g, t.trim()), "Renamed."); return; }
+    if (name === "delete-image") { if (!sure(`Delete the image “${el.dataset.name}” and its comments?`)) return; if (await run(() => B.deleteImage(el.dataset.p, el.dataset.g), "Image deleted.")) go(`/admin/${el.dataset.p}/gallery`); return; }
+    if (name === "delete-pin") { if (!sure("Delete this comment?")) return; await run(() => B.deletePin(el.dataset.p, el.dataset.g, el.dataset.id)); return; }
+    if (name === "rename-doc") { const t = prompt("New name for this document", el.dataset.name); if (t === null || !t.trim()) return; await run(() => B.renameDoc(el.dataset.p, el.dataset.id, t.trim()), "Renamed."); return; }
+    if (name === "delete-doc") { if (!sure(`Delete the document “${el.dataset.name}”?`)) return; await run(() => B.deleteDoc(el.dataset.p, el.dataset.id), "Document deleted."); return; }
+    if (name === "toggle-client") {
+      const off = !el.dataset.disabled;
+      if (off && !sure(`Disable ${el.dataset.name}'s account?\n\nThey will not be able to sign in. Nothing is deleted, and you can enable it again at any time.`)) return;
+      await run(() => B.setClientDisabled(el.dataset.id, off), off ? "Account disabled." : "Account enabled."); return;
+    }
+    if (name === "delete-enquiry") { if (!sure("Delete this message?")) return; await run(() => B.deleteEnquiry(el.dataset.id)); return; }
     if (name === "open-changes") { ui.changesFor = el.dataset.m; render(true); return; }
     if (name === "cancel-changes") { ui.changesFor = null; render(true); return; }
     if (name === "approve") { await run(() => B.approve(el.dataset.p, el.dataset.m), "Approved. The studio has been told."); return; }
@@ -513,7 +601,7 @@
   function afterSignIn() {
     const u = user(); ui.loginError = null;
     const next = ui.next; ui.next = null;
-    const to = next ? next.slice(1) : landing(u);
+    const to = u.mustChange ? "/account" : next ? next.slice(1) : landing(u);
     if (location.hash === "#" + to) render(); else go(to);
   }
 
@@ -556,6 +644,12 @@
       const file = d.get("file"); const doc = { name: v("name"), type: v("type"), version: v("version"), file: file && file.size ? file : null };
       if (doc.file && doc.file.size > 40 * 1024 * 1024) { toast("That file is larger than 40 MB."); return; }
       await run(() => B.addDoc(pid, doc), "Document added."); return;
+    }
+    if (name === "edit-project") { await run(() => B.updateProject(pid, { name: v("name"), place: v("place"), type: v("type"), summary: v("summary") }), "Project saved."); return; }
+    if (name === "add-member") { await run(() => B.addMember(pid, v("client")), "Access given."); return; }
+    if (name === "edit-ms") { await run(() => B.updateMilestone(pid, f.dataset.m, { title: v("title"), phase: +v("phase"), due: v("due"), note: v("note") }), "Milestone saved."); return; }
+    if (name === "edit-client") {
+      await run(async () => { await B.renameClient(f.dataset.id, v("name")); await B.changeClientUsername(f.dataset.id, v("username")); }, "Client saved."); return;
     }
     if (name === "create-client") {
       const acc = { name: v("name"), username: v("username").toLowerCase(), password: String(d.get("password")) };

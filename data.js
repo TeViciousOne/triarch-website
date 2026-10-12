@@ -4,7 +4,7 @@ window.SEED = {
     name: "triArch",
     short: "triArch",
     slogan: "Three points. One vision.",
-    email: "triarch.studio02@gmail.com",
+    email: "triarch.studio08@gmail.com",
     phone: "+355698405408",
     address: "12 Studio Street, Your City",
     logo: { light: "assets/logo-light.png", dark: "assets/logo-dark.png", mark: "assets/mark.png" },

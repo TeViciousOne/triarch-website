@@ -413,3 +413,18 @@ input[type="file"] { padding: 10px 12px; }
 .auth-logo { margin-bottom: 22px; line-height: 0; }
 .auth-logo-img { height: 72px; width: auto; display: block; }
 @media (max-width: 520px) { .logo-img { height: 38px; } }
+
+/* management controls */
+.btn.danger { background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); }
+.btn.danger:hover { background: color-mix(in srgb, var(--red) 22%, transparent); }
+.notice { background: color-mix(in srgb, var(--orange) 12%, transparent); color: var(--ink); padding: 14px 18px; border-radius: var(--r-md); margin-bottom: 24px; font-size: var(--step--1); }
+.notice a { font-weight: 600; }
+.doc-tools { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+details.edit { margin-top: 10px; }
+details.edit > summary { cursor: pointer; color: var(--link); font-size: var(--step--1); font-weight: 600; list-style: none; }
+details.edit > summary::-webkit-details-marker { display: none; }
+.client-row { display: grid; gap: 10px; }
+.client-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.enq { display: grid; gap: 2px; }
+.rows > div > .btn.sm { justify-self: end; }
+.client-row .client-tools { justify-content: flex-start; }

@@ -258,3 +258,45 @@ begin
   update auth.users set encrypted_password = crypt(p_password, gen_salt('bf')), updated_at = now() where id = p_user;
 end $$;
 revoke execute on function reset_client_password(uuid, text) from public, anon;
+
+-- ---------- fourth step: forced-change reminder, managing accounts and content ----------
+alter table profiles add column must_change_password boolean not null default false;  -- true for accounts the studio created or reset
+alter table profiles add column disabled boolean not null default false;              -- access switched off by the studio
+
+-- create_client_account and reset_client_password (above) also set must_change_password = true.
+create function password_changed() returns void language sql security definer set search_path = public as
+$$ update profiles set must_change_password = false where id = (select auth.uid()) $$;
+revoke execute on function password_changed() from public, anon;
+
+create function rename_client_username(p_user uuid, p_username text) returns void
+language plpgsql security definer set search_path = public, extensions, auth as $$
+declare uname text := lower(trim(coalesce(p_username, ''))); mail text;
+begin
+  if not is_staff() then raise exception 'Only studio staff can change usernames'; end if;
+  if uname !~ '^[a-z0-9._-]{3,32}$' then raise exception 'The username must be 3 to 32 characters: letters, numbers, dots, dashes or underscores'; end if;
+  if not exists (select 1 from profiles where id = p_user and role = 'client') then raise exception 'Client not found'; end if;
+  if exists (select 1 from profiles where username = uname and id <> p_user) then raise exception 'That username is already taken'; end if;
+  mail := uname || '@triarch.example.com';
+  update auth.users set email = mail, raw_user_meta_data = raw_user_meta_data || jsonb_build_object('username', uname), updated_at = now() where id = p_user;
+  update auth.identities set identity_data = identity_data || jsonb_build_object('email', mail) where user_id = p_user;
+  update profiles set username = uname where id = p_user;
+end $$;
+revoke execute on function rename_client_username(uuid, text) from public, anon;
+
+create function set_client_disabled(p_user uuid, p_disabled boolean) returns void
+language plpgsql security definer set search_path = public, auth as $$
+begin
+  if not is_staff() then raise exception 'Only studio staff can change accounts'; end if;
+  if not exists (select 1 from profiles where id = p_user and role = 'client') then raise exception 'Client not found'; end if;
+  update auth.users set banned_until = case when p_disabled then 'infinity'::timestamptz else null end, updated_at = now() where id = p_user;
+  update profiles set disabled = p_disabled where id = p_user;
+end $$;
+revoke execute on function set_client_disabled(uuid, boolean) from public, anon;
+
+-- Comments and messages stay if an account is ever removed (shown as "Former user").
+alter table pins alter column author_id drop not null;
+alter table pin_replies alter column author_id drop not null;
+alter table pins drop constraint pins_author_id_fkey, add constraint pins_author_id_fkey foreign key (author_id) references profiles(id) on delete set null;
+alter table pin_replies drop constraint pin_replies_author_id_fkey, add constraint pin_replies_author_id_fkey foreign key (author_id) references profiles(id) on delete set null;
+alter table messages drop constraint messages_author_id_fkey, add constraint messages_author_id_fkey foreign key (author_id) references profiles(id) on delete set null;
+alter table milestones drop constraint milestones_responded_by_fkey, add constraint milestones_responded_by_fkey foreign key (responded_by) references profiles(id) on delete set null;
